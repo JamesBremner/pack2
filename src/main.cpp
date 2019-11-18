@@ -69,6 +69,36 @@ int main()
         }
     }
 
+        thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
+    thePackEngine.add( b );
+    thePackEngine.addItem( "Item1", 100, 10 );
+    thePackEngine.addItem( "Item2", 100, 10 );
+    Pack( thePackEngine );
+    cout << CSV( thePackEngine );
+    if( BinCount( thePackEngine ) != 0 )
+    {
+        std::cout << "Failed 5\n";
+        return false;
+    }
+
+            thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
+    thePackEngine.add( b );
+    auto item = pack2::item_t( new pack2::cItem( "Item1", 100, 10));
+    item->spinEnable();
+    thePackEngine.add( item );
+    item = pack2::item_t( new pack2::cItem( "Item2", 100, 10));
+    item->spinEnable();
+    thePackEngine.add( item );
+    Pack( thePackEngine );
+    cout << CSV( thePackEngine );
+    if( BinCount( thePackEngine ) != 1 )
+    {
+        std::cout << "Failed 6\n";
+        return false;
+    }
+
     cout << "Tests passed\n";
     return 0;
 }

@@ -45,6 +45,26 @@ public:
     {
         myfCanSpin = f;
     }
+    bool canSpin() const
+    {
+        return myfCanSpin;
+    }
+    /// rotate 90 degrees around Z axis
+    void spin()
+    {
+        if( ! myfCanSpin )
+            return;
+        if( myfSpun )
+            return;
+        int temp = myX;
+        myX = myY;
+        myY = temp;
+        myfSpun = true;
+    }
+    bool isSpun()
+    {
+        return myfSpun;
+    }
     virtual void locate( int x, int y )
     {
         myLocX = x;
@@ -80,7 +100,7 @@ private:
     string myUserID;
     int myX;
     int myY;
-    bool myfSpun;
+    bool myfSpun;               // true if item was rotated when packed
     bool myfCanSpin;
     int myProgID;
     static int myLastProgID;
@@ -167,6 +187,11 @@ public:
     {
         return ( myParent != NULL );
     }
+    void spinEnable( bool f = true )
+    {
+        throw runtime_error("Bins cannot be rotated");
+    }
+
 private:
     bool myfCopy;                    ///< true if endless supply available
     int myCopyCount;
@@ -184,6 +209,10 @@ bool Fits( item_t item, bin_t bin )
          <<" " << bin->sizX() <<" "<< bin->sizY()<< "\n";
 #endif // INSTRUMENT
 
+    if ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() )
+        return true;
+    if( item->canSpin() )
+        item->spin();
     return ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() );
 }
 
@@ -386,13 +415,18 @@ int BinCount( cPackEngine& e)
 std::string CSV( cPackEngine& e )
 {
     stringstream ss;
+    ss << "bin_name,item_name,item_left,item_top,rotated\n";
     for( bin_t bin : e.bins() )
     {
         for( item_t item : bin->contents() )
         {
             ss << bin->userID() << "," << item->userID()
-               << "," << item->locX() <<"," << item->locY()
-               << "\n";
+               << "," << item->locX() <<"," << item->locY() << ",";
+            if( item->isSpun() )
+                ss << "rotated";
+            else
+                ss << "fixed";
+            ss << "\n";
         }
     }
     return ss.str();
