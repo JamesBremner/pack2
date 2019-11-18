@@ -40,5 +40,35 @@ int main()
     }
     cout << CSV( thePackEngine );
 
+    int p = 0;
+    for( pack2::bin_t b : thePackEngine.bins() )
+    {
+        p++;
+        switch( p )
+        {
+        case 1:
+            if( b->contents().size() != 1 ) {
+                std::cout << "Failed 3\n";
+                return false;
+            }
+            if( b->contents()[0]->userID() != "Item2" ) {
+                std::cout << "Failed 4\n";
+                return false;
+            }
+            break;
+        case 2:
+              if( b->contents().size() != 1 ) {
+                std::cout << "Failed 5\n";
+                return false;
+            }
+            if( b->contents()[0]->userID() != "Item1" ) {
+                std::cout << "Failed 4\n";
+                return false;
+            }
+            break;
+        }
+    }
+
+    cout << "Tests passed\n";
     return 0;
 }

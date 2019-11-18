@@ -21,11 +21,11 @@ public:
     {
 
     }
-    virtual int x()
+    virtual int sizX()
     {
         return myX;
     }
-    virtual int y()
+    virtual int sizY()
     {
         return myY;
     }
@@ -118,7 +118,7 @@ public:
 
     }
     cBin( bin_t old )
-        : cShape( old->userID(), old->x(), old->y() )
+        : cShape( old->userID(), old->sizX(), old->sizY() )
         , myfCopy( true )
         , myCopyCount( old->myCopyCount+1)
         , myParent( NULL )
@@ -143,7 +143,9 @@ public:
         myfCopy = true;
     }
     bool canCopy() const
-    { return myfCopy; }
+    {
+        return myfCopy;
+    }
 
     bool isUsed()
     {
@@ -178,11 +180,11 @@ bool Fits( item_t item, bin_t bin )
 {
 #ifdef INSTRUMENT
     cout << "Trying to fit item " << item->progID()
-        << " into bin " <<bin->userID() <<" " << bin->progID()
-        <<" " << bin->x() <<" "<< bin->y()<< "\n";
+         << " into bin " <<bin->userID() <<" " << bin->progID()
+         <<" " << bin->sizX() <<" "<< bin->sizY()<< "\n";
 #endif // INSTRUMENT
 
-    return ( item->x() <= bin->x() && item->y() <= bin->y() );
+    return ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() );
 }
 
 
@@ -250,8 +252,8 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     item->locate( bin->locX(), bin->locY() );
 
     // create new bin from remaining space to right of inserted item
-    bin_t newbin = bin_t( new cBin( "", bin->x() - item->x(), item->y() ));
-    newbin->locate( bin->locX() + item->x(), bin->locY() );
+    bin_t newbin = bin_t( new cBin( "", bin->sizX() - item->sizX(), item->sizY() ));
+    newbin->locate( bin->locX() + item->sizX(), bin->locY() );
     if( bin->isSub() )
         newbin->parent( bin->parent() );
     else
@@ -259,8 +261,8 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     e.add( newbin );
 
     // create new bin below and to right of inserted item
-    newbin = bin_t( new cBin( "", bin->x(), bin->y() - item->y() ));
-    newbin->locate( bin->locX(), bin->locY() + item->y() );
+    newbin = bin_t( new cBin( "", bin->sizX(), bin->sizY() - item->sizY() ));
+    newbin->locate( bin->locX(), bin->locY() + item->sizY() );
     if( bin->isSub() )
         newbin->parent( bin->parent() );
     else
@@ -270,7 +272,7 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 /// Remove unused and sub bins
 void RemoveUnusedBins( cPackEngine& e )
 {
-    vector< bin_t > bins = e.bins();
+    vector< bin_t >& bins = e.bins();
     bins.erase(
         remove_if(
             bins.begin(),
@@ -280,6 +282,7 @@ void RemoveUnusedBins( cPackEngine& e )
         if( b->isSub() )
             return true;
         return ( ! b->isUsed() );
+
     } ),
     bins.end() );
 }
