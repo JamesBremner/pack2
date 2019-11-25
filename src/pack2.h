@@ -6,11 +6,17 @@
 #include <memory>
 #include <algorithm>
 
-namespace pack2
-{
+namespace pack2 {
 class cBin;
 typedef std::shared_ptr< cBin > bin_t;
+class cItem;
+typedef std::shared_ptr< cItem > item_t;
+}
 
+#include "cCut.h"
+
+namespace pack2
+{
 class cShape
 {
 public:
@@ -128,7 +134,6 @@ public:
 private:
 
 };
-typedef std::shared_ptr< cItem > item_t;
 
 class cBin : public cShape
 {
@@ -275,6 +280,8 @@ std::string CutList( cPackEngine& e );
 std::string DrawList( cPackEngine& e );
 std::string DrawList( bin_t bin );
 std::string DrawList( item_t item );
+
+std::string CutList( cPackEngine& e );
 }
 
 

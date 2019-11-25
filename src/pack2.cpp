@@ -207,6 +207,14 @@ std::string Unpacked( cPackEngine& e )
 std::string CutList( cPackEngine& e )
 {
     std::stringstream ss;
+
+    for( bin_t b : e.bins() )
+    {
+        cCutList L;
+        CutListBin( b, L );
+        ss << L.get();
+    }
+
     return ss.str();
 }
 std::string DrawList( cPackEngine& e )
