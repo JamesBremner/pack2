@@ -6,7 +6,8 @@
 #include <memory>
 #include <algorithm>
 
-namespace pack2 {
+namespace pack2
+{
 class cBin;
 typedef std::shared_ptr< cBin > bin_t;
 class cItem;
@@ -146,13 +147,24 @@ public:
     {
 
     }
+    /// copy constructor
     cBin( bin_t old )
         : cShape( old->userID(), old->sizX(), old->sizY() )
         , myfCopy( true )
         , myCopyCount( old->myCopyCount+1)
         , myParent( NULL )
     {
-        userID( userID() + "_cpy" + std::to_string( myCopyCount ) );
+        std::string sid = userID() ;
+        int p = sid.find("_cpy");
+        if( p == -1 )
+        {
+            sid += "_cpy2";
+        }
+        else
+        {
+            sid = sid.substr(0,p+4) + std::to_string( myCopyCount);
+        }
+        userID( sid );
     }
     void add( item_t item )
     {
