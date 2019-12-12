@@ -74,6 +74,17 @@ public:
         myY = temp;
         myfSpun = true;
     }
+    void unspin()
+    {
+        if( ! myfCanSpin )
+            return;
+        if( ! myfSpun )
+            return;
+        int temp = myX;
+        myX = myY;
+        myY = temp;
+        myfSpun = false;
+    }
     bool isSpun()
     {
         return myfSpun;
@@ -142,30 +153,14 @@ public:
     cBin( const std::string& id, int x, int y )
         : cShape( id, x, y )
         , myfCopy( false )
-        , myCopyCount( 0 )
+        , myCopyCount( 1 )
         , myParent( NULL )
     {
 
     }
     /// copy constructor
-    cBin( bin_t old )
-        : cShape( old->userID(), old->sizX(), old->sizY() )
-        , myfCopy( true )
-        , myCopyCount( old->myCopyCount+1)
-        , myParent( NULL )
-    {
-        std::string sid = userID() ;
-        int p = sid.find("_cpy");
-        if( p == -1 )
-        {
-            sid += "_cpy2";
-        }
-        else
-        {
-            sid = sid.substr(0,p+4) + std::to_string( myCopyCount);
-        }
-        userID( sid );
-    }
+    cBin( bin_t old );
+
     void add( item_t item )
     {
         if( isSub() )

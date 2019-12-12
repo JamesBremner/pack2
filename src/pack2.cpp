@@ -9,6 +9,25 @@ using namespace std;
 namespace pack2
 {
 
+cBin::cBin( bin_t old )
+    : cShape( old->userID(), old->sizX(), old->sizY() )
+    , myfCopy( true )
+    , myCopyCount( old->myCopyCount+1)
+    , myParent( NULL )
+{
+    std::string sid = userID() ;
+    int p = sid.find("_cpy");
+    if( p == -1 )
+    {
+        sid += "_cpy2";
+    }
+    else
+    {
+        sid = sid.substr(0,p+4) + std::to_string( myCopyCount);
+    }
+    userID( sid );
+}
+
 void Add( cPackEngine& e, bin_t bin, item_t item )
 {
 #ifdef INSTRUMENT
@@ -62,6 +81,7 @@ void Pack( cPackEngine& e )
     {
         // true if an item was successfully packed
         bool itemPacked = false;
+        bool unpackedfound = false;
 
         // try fitting into the smaller spaces first
         SortBinsIntoIncreasingSize( e );
@@ -71,6 +91,7 @@ void Pack( cPackEngine& e )
         {
             if( item->isPacked() )
                 continue;
+            unpackedfound = true;
 
             // item is waiting to be packed
 
@@ -98,12 +119,14 @@ void Pack( cPackEngine& e )
                 break;
         }
 
-        // give up if no item found that fit anywhere
+        if( ! unpackedfound )
+        {
+            cout << "all items successfully packed\n";
+            break;
+        }
         if( ! itemPacked )
         {
-#ifdef INSTRUMENT
             cout << "no more items will fit\n";
-#endif // INSTRUMENT
             break;
         }
     }
@@ -118,8 +141,9 @@ void Pack( cPackEngine& e )
 bool Fits( item_t item, bin_t bin )
 {
 #ifdef INSTRUMENT
-    std::cout << "Trying to fit item " << item->progID()
-              << " into bin " <<bin->userID() <<" " << bin->progID()
+    std::cout << "Trying to fit item " << item->progID() <<" "<< item->userID()
+              <<" " << item->sizX() <<" "<< item->sizY()
+              << "\ninto bin " <<bin->userID() <<" " << bin->progID()
               <<" " << bin->sizX() <<" "<< bin->sizY()<< "\n";
 #endif // INSTRUMENT
 
@@ -127,7 +151,12 @@ bool Fits( item_t item, bin_t bin )
         return true;
     if( item->canSpin() )
         item->spin();
-    return ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() );
+    else
+        return false;
+    if ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() )
+        return true;
+    item->unspin();
+    return false;
 }
 
 void RemoveUnusedBins( cPackEngine& e )
