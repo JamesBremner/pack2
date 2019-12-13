@@ -28,6 +28,17 @@ cBin::cBin( bin_t old )
     userID( sid );
 }
 
+std::string cBin::text()
+{
+    std::stringstream ss;
+    if( myParent )
+        ss << parent()->userID();
+    ss <<" "<<userID() <<" " << progID()
+       <<" " << sizX() <<" "<< sizY()
+       <<" at " << locX() <<" "<< locY() << "\n";
+    return ss.str();
+}
+
 void Add( cPackEngine& e, bin_t bin, item_t item )
 {
 #ifdef INSTRUMENT
@@ -59,6 +70,7 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     else
         newbin->parent( bin );
     e.add( newbin );
+    MergeUnusedSpace( e, newbin );
 
     if( bin->sizY() - item->sizY() > 0 )
     {
@@ -70,6 +82,130 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
         else
             newbin->parent( bin );
         e.add( newbin );
+    }
+}
+
+void MergeUnusedSpace( cPackEngine& e, bin_t newbin )
+{
+    cout << "=> trying to merge " << newbin->text();
+
+    int right = newbin->locX() + newbin->sizX();
+    for( auto bin : e.bins() )
+    {
+        if( bin->progID() == newbin->progID() )
+            continue;
+        if( bin->isPacked() )
+            continue;
+        if( bin->parent() != newbin->parent() )
+            continue;
+        cout << bin->text();
+        if( bin->locX() + bin->sizX() == right )
+        {
+            bool newAbove = false;
+            if( bin->locY() < newbin->locY() )
+            {
+                if( bin->locY() + bin->sizY() != newbin->locY() )
+                    continue;
+                else
+                {
+                    newAbove = false;
+
+                }
+            }
+            else
+            {
+                if( newbin->locY() + newbin->sizY() != bin->locY() )
+                    continue;
+                else
+                    newAbove = true;
+            }
+            cout << "merge candidate\n";
+
+            bool newWidest = ( newbin->locX() < bin->locX() );
+
+            int mxs = right - bin->locX();
+            if( mxs > right - newbin->locX() )
+                mxs = right - newbin->locX();
+            int mys = bin->sizY() + newbin->sizY();
+            int mxl = newbin->locX();
+            if( mxl < bin->locX() )
+            {
+                mxl = bin->locX();
+            }
+            int myl = bin->locY();
+            if( newAbove )
+                myl = newbin->locY();
+
+            // construct merged bin
+            bin_t mergebin = bin_t( new cBin( "", mxs, mys ));
+            mergebin->locate( mxl, myl );
+            if( bin->isSub() )
+                mergebin->parent( bin->parent() );
+            else
+                mergebin->parent( bin );
+            cout << mergebin->text();
+
+            int exl, eyl, exs, eys;
+            if( newWidest )
+            {
+                exl = newbin->locX();
+                eyl = newbin->locY();
+                      exs = exl - bin->locX();
+                eys = newbin->sizY();
+            }
+            else
+            {
+                exl = bin->locX();
+                eyl = bin->locY();
+                      exs = exl - newbin->locX();
+                eys = bin->sizY();
+            }
+
+            //  construct bin from left over space
+            bin_t extrabin = bin_t( new cBin( "", exs, eys ));
+            extrabin->locate( exl, eyl );
+            if( bin->isSub() )
+                extrabin->parent( bin->parent() );
+            else
+                extrabin->parent( bin );
+            cout << extrabin->text();
+
+            // check that the merge is an improvement
+            int max_old_area = bin->size();
+            if( newbin->size() > max_old_area )
+                max_old_area = newbin->size();
+            int max_new_area = mergebin->size();
+            if( extrabin->size() > max_new_area )
+                max_new_area = extrabin->size();
+            if( max_old_area >= max_new_area )
+                return;
+
+            // remove the two merged bins
+            int remID = newbin->progID();
+            e.bins().erase(
+                remove_if(
+                    e.bins().begin(),
+                    e.bins().end(),
+                    [ remID ] ( bin_t b )
+            {
+                return( b->progID() == remID );
+            } ),
+            e.bins().end() );
+            remID = bin->progID();
+            e.bins().erase(
+                remove_if(
+                    e.bins().begin(),
+                    e.bins().end(),
+                    [ remID ] ( bin_t b )
+            {
+                return( b->progID() == remID );
+            } ),
+            e.bins().end() );
+
+            // add the results of merging
+            e.add( mergebin );
+            e.add( extrabin );
+        }
     }
 }
 

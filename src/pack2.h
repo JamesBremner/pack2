@@ -102,6 +102,10 @@ public:
     {
         return myLocY;
     }
+    int right() const
+    {
+        return myLocX + myX;
+    }
     void pack( bool f = true )
     {
         myfPacked = f;
@@ -215,6 +219,8 @@ public:
         else
             return myCopyCount;
     }
+    std::string text();
+
 
 private:
     bool myfCopy;                    ///< true if endless supply available
@@ -269,12 +275,15 @@ private:
 /// pack item into bin
 void Add( cPackEngine& e, bin_t bin, item_t item );
 
+void MergeUnusedSpace( cPackEngine& e, bin_t mewbin );
+
 /// Remove unused and sub bins
 void RemoveUnusedBins( cPackEngine& e );
 
 
 void SortItemsIntoDecreasingSize( cPackEngine& e );
 
+/// sort bins into increasing size AND copy count
 void SortBinsIntoIncreasingSize( cPackEngine& e );
 
 
