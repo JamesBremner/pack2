@@ -207,6 +207,14 @@ public:
     {
         throw std::runtime_error("Bins cannot be rotated");
     }
+    /// get copy count of root bin
+    int copyCount()
+    {
+        if( myParent )
+            return myParent->copyCount();
+        else
+            return myCopyCount;
+    }
 
 private:
     bool myfCopy;                    ///< true if endless supply available

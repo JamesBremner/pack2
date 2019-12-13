@@ -60,14 +60,17 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
         newbin->parent( bin );
     e.add( newbin );
 
-    // create new bin below and to right of inserted item
-    newbin = bin_t( new cBin( "", bin->sizX(), bin->sizY() - item->sizY() ));
-    newbin->locate( bin->locX(), bin->locY() + item->sizY() );
-    if( bin->isSub() )
-        newbin->parent( bin->parent() );
-    else
-        newbin->parent( bin );
-    e.add( newbin );
+    if( bin->sizY() - item->sizY() > 0 )
+    {
+        // create new bin below and to right of inserted item
+        newbin = bin_t( new cBin( "", bin->sizX(), bin->sizY() - item->sizY() ));
+        newbin->locate( bin->locX(), bin->locY() + item->sizY() );
+        if( bin->isSub() )
+            newbin->parent( bin->parent() );
+        else
+            newbin->parent( bin );
+        e.add( newbin );
+    }
 }
 
 void Pack( cPackEngine& e )
@@ -143,8 +146,12 @@ bool Fits( item_t item, bin_t bin )
 #ifdef INSTRUMENT
     std::cout << "Trying to fit item " << item->progID() <<" "<< item->userID()
               <<" " << item->sizX() <<" "<< item->sizY()
-              << "\ninto bin " <<bin->userID() <<" " << bin->progID()
-              <<" " << bin->sizX() <<" "<< bin->sizY()<< "\n";
+              << " into bin ";
+    if( bin->parent() )
+        std::cout << bin->parent()->userID();
+    std::cout <<" "<<bin->userID() <<" " << bin->progID()
+              <<" " << bin->sizX() <<" "<< bin->sizY()
+              <<" at " << bin->locX() <<" "<< bin->locY() << "\n";
 #endif // INSTRUMENT
 
     if ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() )
@@ -190,8 +197,28 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
     sort( bins.begin(), bins.end(),
           []( bin_t a, bin_t b )
     {
-        return a->size() < b->size();
+        // return true if a smaller than b and in lower or same copy count bin
+        if( a->size() < b->size() )
+        {
+            if( a->copyCount() <= b->copyCount() )
+                return true;
+        }
+        return false;
+
     });
+
+#ifdef INSTRUMENT
+    for( auto bin : e.bins() )
+    {
+        std::cout << "bin ";
+        if( bin->parent() )
+            std::cout << bin->parent()->userID();
+        std::cout <<" "<<bin->userID() <<" " << bin->progID()
+                  <<" " << bin->sizX() <<" "<< bin->sizY()
+                  <<" at " << bin->locX() <<" "<< bin->locY() << "\n";
+    }
+#endif // INSTRUMENT
+
 }
 int BinCount( cPackEngine& e)
 {
