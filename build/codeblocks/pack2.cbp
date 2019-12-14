@@ -34,7 +34,9 @@
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
 		</Compiler>
+		<Unit filename="../../src/cCut.cpp" />
 		<Unit filename="../../src/main.cpp" />
+		<Unit filename="../../src/pack2.cpp" />
 		<Unit filename="../../src/pack2.h" />
 		<Extensions>
 			<code_completion />
