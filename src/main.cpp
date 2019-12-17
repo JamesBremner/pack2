@@ -11,7 +11,34 @@ using namespace std;
 int main()
 {
     pack2::cPackEngine thePackEngine;
-    auto b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    pack2::bin_t b;
+
+    thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    b->copyEnable();
+    thePackEngine.add( b );
+    thePackEngine.addItem( "Item50by40", 50, 40 );
+    thePackEngine.addItem( "Item60by20", 60, 20 );
+    Pack( thePackEngine );
+
+
+    thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    thePackEngine.add( b );
+    thePackEngine.addItem( "Item90by80", 90, 80 );
+    thePackEngine.addItem( "Item80by20", 80, 20 );
+    thePackEngine.addItem( "Item5by100", 5, 100 );
+    Pack( thePackEngine );
+    if( BinCount( thePackEngine ) != 1 )
+    {
+        std::cout << "Failed 7\n";
+        return 1;
+    }
+    cout << CSV( thePackEngine );
+
+
+    thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
     b->copyEnable();
     thePackEngine.add( b );
     thePackEngine.addItem( "Item1", 10, 10 );

@@ -2,6 +2,7 @@
 
 #include <string>
 #include <sstream>
+#include <iostream>
 #include <vector>
 #include <memory>
 #include <algorithm>
@@ -34,9 +35,13 @@ public:
     {
 
     }
-    virtual int sizX()
+    virtual int sizX() const
     {
         return myX;
+    }
+    void sizX( int sx )
+    {
+        myX = sx;
     }
     virtual int sizY()
     {
@@ -105,6 +110,10 @@ public:
     int right() const
     {
         return myLocX + myX;
+    }
+    int bottom() const
+    {
+        return myLocY + myY;
     }
     void pack( bool f = true )
     {
@@ -203,6 +212,10 @@ public:
     {
         return myParent;
     }
+    /** true if this bin has a parent
+        which means that is not one of the original or copied physical bins
+        but a sub-bin created to hold a packed item or unused space left when an item was packed
+    */
     bool isSub()
     {
         return ( myParent != NULL );
@@ -276,6 +289,8 @@ private:
 void Add( cPackEngine& e, bin_t bin, item_t item );
 
 void MergeUnusedSpace( cPackEngine& e, bin_t mewbin );
+void MergeUnusedOnRight( cPackEngine& e );
+void Merge( cPackEngine& e, bin_t above, bin_t below );
 
 /// Remove unused and sub bins
 void RemoveUnusedBins( cPackEngine& e );
