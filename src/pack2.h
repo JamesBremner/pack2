@@ -246,12 +246,23 @@ private:
 /// true if item fits inside bin
 bool Fits( item_t item, bin_t bin );
 
+struct sAlgorithm
+{
+    bool fTryEveryItemFirst;
+};
+
 class cPackEngine
 {
 public:
-    void addBin( const std::string& id, int x, int y )
+    cPackEngine()
     {
-        myBin.push_back( bin_t( new cBin(  id, x, y ) ) );
+        myAlgorithm.fTryEveryItemFirst = false;
+    }
+    bin_t addBin( const std::string& id, int x, int y )
+    {
+        bin_t b = bin_t( new cBin(  id, x, y ) );
+        myBin.push_back( b );
+        return b;
     }
     void addItem( const std::string& id, int x, int y)
     {
@@ -278,9 +289,14 @@ public:
     {
         return myItem;
     }
+    sAlgorithm& Algorithm()
+    {
+        return myAlgorithm;
+    }
 private:
     std::vector< item_t > myItem;
     std::vector< bin_t > myBin;
+    sAlgorithm myAlgorithm;
 };
 
 
@@ -302,8 +318,11 @@ void SortItemsIntoDecreasingSize( cPackEngine& e );
 void SortBinsIntoIncreasingSize( cPackEngine& e );
 
 
-/// Pack items into bins
+/// Sort and pack items into bins,
 void Pack( cPackEngine& e );
+
+/// Pack pre-sorted items into bins
+void PackSortedItems( cPackEngine& e );
 
 /// Number of bins used
 int BinCount( cPackEngine& e);

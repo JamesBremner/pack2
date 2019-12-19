@@ -402,6 +402,36 @@ void Pack( cPackEngine& e )
     // so the smaller may fit into odd remaining spaces
     SortItemsIntoDecreasingSize( e );
 
+    PackSortedItems( e );
+
+    if( e.Algorithm().fTryEveryItemFirst ) {
+    int bestBinCount = BinCount( e );
+
+    vector<item_t> sortedItems = e.items();
+
+    for( int firstItem = 1; firstItem < (int)e.items().size(); firstItem++ )
+    {
+        e.items().clear();
+        e.items().push_back( sortedItems[ firstItem ] );
+        for( auto i : sortedItems ) {
+            if( i->progID() == sortedItems[ firstItem ]->progID() )
+                continue;
+            e.items().push_back( i );
+        }
+
+        PackSortedItems( e );
+
+        if( BinCount( e ) < bestBinCount )
+            return;
+    }
+
+    e.items() = sortedItems;
+    PackSortedItems( e );
+    }
+}
+
+void PackSortedItems( cPackEngine& e )
+{
     // loop until no more items can be packed
     while( 1 )
     {
