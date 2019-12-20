@@ -126,7 +126,202 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
         //cout << "added4 " << newbin->text();
     }
 
-    MergeUnusedOnRight( e );
+    //MergeUnusedOnRight( e );
+
+    MergeUnusedFromBottomRight( e, bin );
+}
+void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
+{
+    if( bin->parent() )
+        bin = bin->parent();
+    std::cout << "looking for merge in bin " << bin->text();
+
+    std::vector<bin_t> spaces;
+    for( bin_t b : e.bins() )
+    {
+        if( ! b->parent() )
+            continue;
+        if( b->parent() != bin )
+            continue;
+        if( b->isUsed() )
+            continue;
+        spaces.push_back( b );
+    }
+    bin_t br;
+    for( bin_t b : spaces )
+    {
+        if( b->right() != bin->right() )
+            continue;
+        if( b->bottom() != bin->bottom() )
+            continue;
+        br = b;
+        break;
+    }
+    if( ! br )
+        return;
+    std::cout << " bottom right " << br->text();
+
+    // find merge candidates on left of bottom right
+    std::vector<bin_t> cands;
+    for( bin_t b : spaces )
+    {
+        if( b->right() == br->locX() )
+        {
+            if( br->locY() <= b->bottom() )
+            {
+                cands.push_back( b );
+            }
+        }
+    }
+    if( cands.size() )
+    {
+
+        // sort into increasing Y
+        sort( cands.begin(), cands.end(),
+              []( bin_t a, bin_t b )
+        {
+            return a->locY() < b->locY();
+        });
+
+
+        bool nobreak = true;
+        bin_t prev;
+        for( bin_t b : cands )
+        {
+            if( ! prev )
+            {
+                prev = b;
+                continue;
+            }
+            if( prev->bottom() != b->locY() )
+            {
+                nobreak = false;
+                break;
+            }
+            prev = b;
+        }
+        if( nobreak )
+        {
+            if( cands[0]->locY() <= br->locY() )
+            {
+                bin_t newbin = bin_t( new cBin(
+                                          bin,
+                                          cands[0]->locX(),
+                                          cands[0]->locY(),
+                                          cands[0]->sizX(),
+                                          br->locY() - cands[0]->locY() ) );
+                e.add( newbin );
+                cands[0]->sizY( cands[0]->sizY()-newbin->sizY() );
+                cands[0]->locY( br->locY() );
+            }
+            if( cands[0]->locY() == br->locY() )
+            {
+                int maxW = bin->sizX();
+                for( bin_t b : cands )
+                {
+                    if( b->sizX() < maxW )
+                        maxW = b->sizX();
+                }
+
+                // construct merged bin
+                bin_t newbin = bin_t( new cBin(
+                                          bin,
+                                          br->locX()-maxW,
+                                          cands[0]->locY(),
+                                          maxW+br->sizX(), br->sizY() ));
+                e.add( newbin );
+                std::cout << "newbin " << newbin->text();
+
+                for( bin_t b : cands )
+                {
+                    b->sizX( b->sizX()-maxW );
+                }
+                br->sizX( 0 );
+
+                //remove bins that have no X dimension
+                RemoveZeroBins( e );
+            }
+        }
+    }
+    // find merge candidates on top of bottom right
+    cands.clear();
+    for( bin_t b : spaces )
+    {
+        if( b->bottom() == br->locY() )
+        {
+            if( br->locX() <= b->locX() )
+            {
+                cands.push_back( b );
+            }
+        }
+    }
+    if( cands.size() )
+    {
+        // sort into increasing X
+        sort( cands.begin(), cands.end(),
+              []( bin_t a, bin_t b )
+        {
+            return a->locX() < b->locX();
+        });
+        bool nobreak = true;
+        bin_t prev;
+        for( bin_t b : cands )
+        {
+            if( ! prev )
+            {
+                prev = b;
+                continue;
+            }
+            if( prev->right() != b->locX() )
+            {
+                nobreak = false;
+                break;
+            }
+            prev = b;
+        }
+        if( nobreak )
+        {
+            if( cands[0]->locX() < br->locX() )
+            {
+                bin_t newbin = bin_t( new cBin(
+                                          bin,
+                                          cands[0]->locX(),
+                                          cands[0]->locY(),
+                                          cands[0]->sizX() - cands[0]->locX(),
+                                          br->locY() ) );
+                e.add( newbin );
+                cands[0]->sizX( cands[0]->sizX()-newbin->sizX() );
+                cands[0]->locX( br->locX() );
+            }
+
+            if( cands[0]->locX() == br->locX() )
+            {
+                int maxH = bin->sizY();
+                for( bin_t b : cands )
+                {
+                    if( b->sizY() < maxH )
+                        maxH = b->sizY();
+                }
+                // construct merged bin
+                bin_t newbin = bin_t( new cBin(
+                                          bin,
+                                          br->locY()-maxH,
+                                          cands[0]->locX(),
+                                          br->sizX(), br->sizY()+maxH ));
+                e.add( newbin );
+                std::cout << "newbin " << newbin->text();
+
+                for( bin_t b : cands )
+                {
+                    b->sizY( b->sizY()-maxH );
+                }
+                br->sizX( 0 );
+
+                //remove bins that have no X dimension
+                RemoveZeroBins( e );
+            }
+        }
+    }
 }
 void Merge( cPackEngine& e, bin_t above, bin_t below )
 {
@@ -174,9 +369,9 @@ void MergeUnusedOnRight( cPackEngine& e )
         if( ! base->isUsed() )
             continue;
 
-            #ifdef INSTRUMENT
+#ifdef INSTRUMENT
         std::cout << "Looking for merge in " << base->text();
-        #endif // INSTRUMENT
+#endif // INSTRUMENT
 
         int narrowest, topmost, bottommost, biggest;
         vector< bin_t > vcan;
@@ -209,9 +404,9 @@ void MergeUnusedOnRight( cPackEngine& e )
                     biggest = sub->size();
             }
             vcan.push_back( sub );
-            #ifdef INSTRUMENT
+#ifdef INSTRUMENT
             std::cout << "candidate " << sub->text();
-            #endif
+#endif
         }
 
         // where at least 2 condidates found?
@@ -404,29 +599,31 @@ void Pack( cPackEngine& e )
 
     PackSortedItems( e );
 
-    if( e.Algorithm().fTryEveryItemFirst ) {
-    int bestBinCount = BinCount( e );
-
-    vector<item_t> sortedItems = e.items();
-
-    for( int firstItem = 1; firstItem < (int)e.items().size(); firstItem++ )
+    if( e.Algorithm().fTryEveryItemFirst )
     {
-        e.items().clear();
-        e.items().push_back( sortedItems[ firstItem ] );
-        for( auto i : sortedItems ) {
-            if( i->progID() == sortedItems[ firstItem ]->progID() )
-                continue;
-            e.items().push_back( i );
+        int bestBinCount = BinCount( e );
+
+        vector<item_t> sortedItems = e.items();
+
+        for( int firstItem = 1; firstItem < (int)e.items().size(); firstItem++ )
+        {
+            e.items().clear();
+            e.items().push_back( sortedItems[ firstItem ] );
+            for( auto i : sortedItems )
+            {
+                if( i->progID() == sortedItems[ firstItem ]->progID() )
+                    continue;
+                e.items().push_back( i );
+            }
+
+            PackSortedItems( e );
+
+            if( BinCount( e ) < bestBinCount )
+                return;
         }
 
+        e.items() = sortedItems;
         PackSortedItems( e );
-
-        if( BinCount( e ) < bestBinCount )
-            return;
-    }
-
-    e.items() = sortedItems;
-    PackSortedItems( e );
     }
 }
 
@@ -478,7 +675,7 @@ void PackSortedItems( cPackEngine& e )
         if( ! unpackedfound )
         {
             cout << "all items successfully packed in "
-                << BinCount( e ) << " bins\n";
+                 << BinCount( e ) << " bins\n";
             break;
         }
         if( ! itemPacked )
@@ -534,6 +731,19 @@ void RemoveUnusedBins( cPackEngine& e )
     } ),
     bins.end() );
 }
+void RemoveZeroBins( cPackEngine& e )
+{
+    std::vector< bin_t >& bins = e.bins();
+    bins.erase(
+        remove_if(
+            bins.begin(),
+            bins.end(),
+            [ ] ( bin_t b )
+    {
+        return ( (! b->sizX()) || (! b->sizY() ) );
+    } ),
+    bins.end() );
+}
 void SortItemsIntoDecreasingSize( cPackEngine& e )
 {
     std::vector<item_t>& items = e.items();
@@ -558,7 +768,6 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
                 return true;
         }
         return false;
-
     });
 
 #ifdef INSTRUMENT

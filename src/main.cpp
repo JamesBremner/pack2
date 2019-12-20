@@ -15,12 +15,95 @@ int main()
 
     thePackEngine.clear();
     b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    pack2::bin_t space = pack2::bin_t( new pack2::cBin( "", 20, 20 ));
+    space->locate( 80, 80 );
+    space->parent( b );
+    thePackEngine.add( space );
+    space = pack2::bin_t( new pack2::cBin( b, 80, 60, 20, 20 ));
+    thePackEngine.add( space );
+    MergeUnusedFromBottomRight( thePackEngine, b );
+    for( pack2::bin_t b : thePackEngine.bins() )
+        std::cout << b->text();
+
+
+    thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    space = pack2::bin_t( new pack2::cBin( "", 20, 20 ));
+    space->locate( 80, 80 );
+    space->parent( b );
+    thePackEngine.add( space );
+    space = pack2::bin_t( new pack2::cBin( "", 10, 20 ));
+    space->locate( 70, 70 );
+    space->parent( b );
+    thePackEngine.add( space );
+    space = pack2::bin_t( new pack2::cBin( "", 20, 10 ));
+    space->locate( 60, 90 );
+    space->parent( b );
+    thePackEngine.add( space );
+    MergeUnusedFromBottomRight( thePackEngine, b );
+    for( pack2::bin_t b : thePackEngine.bins() )
+        std::cout << b->text();
+    if( thePackEngine.bins().size() != 3 )
+             {
+        std::cout << "Failed 10\n";
+        return 1;
+    }
+    if( thePackEngine.bins()[0]->size() != 100 )
+     {
+        std::cout << "Failed 11\n";
+        return 1;
+    }
+        if( thePackEngine.bins()[1]->size() != 100 )
+     {
+        std::cout << "Failed 12\n";
+        return 1;
+    }
+    if( thePackEngine.bins()[2]->size() != 600 )
+     {
+        std::cout << "Failed 13\n";
+        return 1;
+    }
+
+    thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    space = pack2::bin_t( new pack2::cBin( "", 20, 20 ));
+    space->locate( 80, 80 );
+    space->parent( b );
+    thePackEngine.add( space );
+    space = pack2::bin_t( new pack2::cBin( "", 10, 10 ));
+    space->locate( 70, 80 );
+    space->parent( b );
+    thePackEngine.add( space );
+    space = pack2::bin_t( new pack2::cBin( "", 20, 10 ));
+    space->locate( 60, 90 );
+    space->parent( b );
+    thePackEngine.add( space );
+    MergeUnusedFromBottomRight( thePackEngine, b );
+    for( pack2::bin_t b : thePackEngine.bins() )
+        std::cout << b->text();
+    if( thePackEngine.bins().size() != 2 )
+             {
+        std::cout << "Failed 2-1\n";
+        return 1;
+    }
+    if( thePackEngine.bins()[0]->size() != 100 )
+     {
+        std::cout << "Failed 2-2\n";
+        return 1;
+    }
+    if( thePackEngine.bins()[1]->size() != 600 )
+     {
+        std::cout << "Failed 2-3\n";
+        return 1;
+    }
+
+    thePackEngine.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
     b->copyEnable();
     thePackEngine.add( b );
     thePackEngine.addItem( "Item50by40", 50, 40 );
     thePackEngine.addItem( "Item60by20", 60, 20 );
     Pack( thePackEngine );
-
 
     thePackEngine.clear();
     b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));

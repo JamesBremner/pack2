@@ -35,6 +35,12 @@ public:
     {
 
     }
+    cShape( int left, int top, int width, int height)
+        : cShape( "", width, height )
+    {
+        myLocX = left;
+        myLocY = top;
+    }
     virtual int sizX() const
     {
         return myX;
@@ -42,6 +48,10 @@ public:
     void sizX( int sx )
     {
         myX = sx;
+    }
+    void sizY( int sy )
+    {
+        myY = sy;
     }
     virtual int sizY()
     {
@@ -103,9 +113,17 @@ public:
     {
         return myLocX;
     }
+    void locX( int lx )
+    {
+        myLocX = lx;
+    }
     int locY()
     {
         return myLocY;
+    }
+    void locY( int ly )
+    {
+        myLocY = ly;
     }
     int right() const
     {
@@ -168,6 +186,14 @@ public:
         , myfCopy( false )
         , myCopyCount( 1 )
         , myParent( NULL )
+    {
+
+    }
+    cBin( bin_t parent, int left, int top, int width, int height)
+        : cShape( left, top, width, height)
+        , myfCopy( false )
+        , myCopyCount( 1 )
+        , myParent( parent )
     {
 
     }
@@ -307,10 +333,11 @@ void Add( cPackEngine& e, bin_t bin, item_t item );
 void MergeUnusedSpace( cPackEngine& e, bin_t mewbin );
 void MergeUnusedOnRight( cPackEngine& e );
 void Merge( cPackEngine& e, bin_t above, bin_t below );
+void MergeUnusedFromBottomRight( cPackEngine& e,  bin_t bin );
 
 /// Remove unused and sub bins
 void RemoveUnusedBins( cPackEngine& e );
-
+void RemoveZeroBins( cPackEngine& e );
 
 void SortItemsIntoDecreasingSize( cPackEngine& e );
 
