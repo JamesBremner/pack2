@@ -13,6 +13,7 @@ class cBin;
 typedef std::shared_ptr< cBin > bin_t;
 class cItem;
 typedef std::shared_ptr< cItem > item_t;
+typedef std::vector<item_t> itemv_t;
 }
 
 #include "cCut.h"
@@ -275,6 +276,7 @@ bool Fits( item_t item, bin_t bin );
 struct sAlgorithm
 {
     bool fTryEveryItemFirst;
+    int MergeOnRightCandMinWidth;
 };
 
 class cPackEngine
@@ -283,6 +285,7 @@ public:
     cPackEngine()
     {
         myAlgorithm.fTryEveryItemFirst = false;
+        myAlgorithm.MergeOnRightCandMinWidth = 0;
     }
     bin_t addBin( const std::string& id, int x, int y )
     {
@@ -340,6 +343,7 @@ void RemoveUnusedBins( cPackEngine& e );
 void RemoveZeroBins( cPackEngine& e );
 
 void SortItemsIntoDecreasingSize( cPackEngine& e );
+void SortItemsIntoDecreasingAwkward( cPackEngine& e );
 
 /// sort bins into increasing size AND copy count
 void SortBinsIntoIncreasingSize( cPackEngine& e );

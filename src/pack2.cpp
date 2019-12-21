@@ -86,28 +86,28 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     if( xs4 * ys4 > max34 )
         max34 = xs4 * ys4;
 
-    if( max12 >= max34 )
-    {
-        bin_t newbin = bin_t( new cBin( "", xs1, ys1 ));
-        newbin->locate( bin->locX() + item->sizX(), bin->locY() );
-        if( bin->isSub() )
-            newbin->parent( bin->parent() );
-        else
-            newbin->parent( bin );
-        e.add( newbin );
-        //cout << "added1 " << newbin->text();
-        //MergeUnusedSpace( e, newbin );
-        newbin = bin_t( new cBin( "", xs2, ys2 ));
-        newbin->locate( bin->locX(), bin->locY() + item->sizY() );
-        if( bin->isSub() )
-            newbin->parent( bin->parent() );
-        else
-            newbin->parent( bin );
-        e.add( newbin );
-        //cout << "added2 " << newbin->text();
-    }
-    else
-    {
+//    if( max12 >= max34 )
+//    {
+//        bin_t newbin = bin_t( new cBin( "", xs1, ys1 ));
+//        newbin->locate( bin->locX() + item->sizX(), bin->locY() );
+//        if( bin->isSub() )
+//            newbin->parent( bin->parent() );
+//        else
+//            newbin->parent( bin );
+//        e.add( newbin );
+//        cout << "added1 " << newbin->text();
+//        //MergeUnusedSpace( e, newbin );
+//        newbin = bin_t( new cBin( "", xs2, ys2 ));
+//        newbin->locate( bin->locX(), bin->locY() + item->sizY() );
+//        if( bin->isSub() )
+//            newbin->parent( bin->parent() );
+//        else
+//            newbin->parent( bin );
+//        e.add( newbin );
+//        cout << "added2 " << newbin->text();
+//    }
+//    else
+//    {
         bin_t newbin = bin_t( new cBin( "", xs3, ys3 ));
         newbin->locate( bin->locX() + item->sizX(), bin->locY() );
         if( bin->isSub() )
@@ -124,11 +124,11 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
             newbin->parent( bin );
         e.add( newbin );
         //cout << "added4 " << newbin->text();
-    }
+//    }
 
-    //MergeUnusedOnRight( e );
+    MergeUnusedOnRight( e );
 
-    MergeUnusedFromBottomRight( e, bin );
+    //MergeUnusedFromBottomRight( e, bin );
 }
 void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
 {
@@ -370,7 +370,7 @@ void MergeUnusedOnRight( cPackEngine& e )
             continue;
 
 #ifdef INSTRUMENT
-        std::cout << "Looking for merge in " << base->text();
+        std::cout << "Looking for merge on right in " << base->text();
 #endif // INSTRUMENT
 
         int narrowest, topmost, bottommost, biggest;
@@ -384,6 +384,8 @@ void MergeUnusedOnRight( cPackEngine& e )
             if( sub->isPacked() )
                 continue;
             if( sub->right() != base->right() )
+                continue;
+            if(  sub->sizX() < e.Algorithm().MergeOnRightCandMinWidth )
                 continue;
             if( ! vcan.size() )
             {
@@ -430,6 +432,7 @@ void MergeUnusedOnRight( cPackEngine& e )
             }
             if( prev_in_y->bottom() != b->locY() )
             {
+                //std::cout << "break\n" << prev_in_y->text() << b->text() <<"\n";
                 fOK = false;
                 break;
             }
@@ -438,18 +441,20 @@ void MergeUnusedOnRight( cPackEngine& e )
         if( ! fOK )
             continue;
 
-        //std::cout << "narrowest " << narrowest << "\n";
+#ifdef INSTRUMENT
+        std::cout << "narrowest " << narrowest << "\n";
+#endif // INSTRUMENT
 
         int mxs = narrowest;
         int mys = bottommost - topmost;
-        if( mxs * mys < biggest )
-            return;
+//        if( mxs * mys < biggest )
+//            return;
 
         int mxl = base->right() - narrowest;
         for( auto b : vcan )
         {
             b->sizX( mxl - b->locX() );
-            //std::cout << "modified " << b->text();
+            std::cout << "modified " << b->text();
         }
 
         bin_t mergebin = bin_t( new cBin( "",
@@ -458,7 +463,7 @@ void MergeUnusedOnRight( cPackEngine& e )
         mergebin->locate( mxl, topmost );
         mergebin->parent( base );
         vmerges.push_back( mergebin );
-        //std::cout << "merge1 " << mergebin->text();
+        std::cout << "merge1 " << mergebin->text();
     }
     for( auto mb : vmerges )
         e.add( mb );
@@ -595,7 +600,9 @@ void Pack( cPackEngine& e )
 {
     // try packing larger items first
     // so the smaller may fit into odd remaining spaces
-    SortItemsIntoDecreasingSize( e );
+    //SortItemsIntoDecreasingSize( e );
+
+    SortItemsIntoDecreasingAwkward( e );
 
     PackSortedItems( e );
 
@@ -717,6 +724,7 @@ bool Fits( item_t item, bin_t bin )
 
 void RemoveUnusedBins( cPackEngine& e )
 {
+    //std::cout << "unused spaces\n";
     std::vector< bin_t >& bins = e.bins();
     bins.erase(
         remove_if(
@@ -725,7 +733,10 @@ void RemoveUnusedBins( cPackEngine& e )
             [ ] ( bin_t b )
     {
         if( b->isSub() )
+        {
+            //std::cout << b->text();
             return true;
+        }
         return ( ! b->isUsed() );
 
     } ),
@@ -753,6 +764,36 @@ void SortItemsIntoDecreasingSize( cPackEngine& e )
         return a->size() > b->size();
     });
 }
+void SortItemsIntoDecreasingAwkward( cPackEngine& e )
+{
+    itemv_t most_awkward;
+    itemv_t unsorted;
+    for( item_t item : e.items() )
+    {
+        if( item->sizX() > e.bins()[0]->sizX() ||
+                item->sizX() > e.bins()[0]->sizY() ||
+                item->sizY() > e.bins()[0]->sizX() ||
+                item->sizY() > e.bins()[0]->sizY()
+          )
+            most_awkward.push_back( item );
+        else
+            unsorted.push_back( item );
+    }
+    sort( unsorted.begin(), unsorted.end(),
+          []( item_t a, item_t b )
+    {
+        return a->size() > b->size();
+    });
+    e.items().clear();
+    for( item_t item : most_awkward )
+    {
+        e.items().push_back( item );
+    }
+    for( item_t item : unsorted )
+    {
+        e.items().push_back( item );
+    }
+}
 void SortBinsIntoIncreasingSize( cPackEngine& e )
 {
     auto& bins = e.bins();
@@ -770,17 +811,17 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
         return false;
     });
 
-#ifdef INSTRUMENT
-    for( auto bin : e.bins() )
-    {
-        std::cout << "sorted bin ";
-        if( bin->parent() )
-            std::cout << bin->parent()->userID();
-        std::cout <<" "<<bin->text()
-                  << " packed "<<bin->isPacked()
-                  << "\n";
-    }
-#endif // INSTRUMENT
+//#ifdef INSTRUMENT
+//    for( auto bin : e.bins() )
+//    {
+//        std::cout << "sorted bin ";
+//        if( bin->parent() )
+//            std::cout << bin->parent()->userID();
+//        std::cout <<" "<<bin->text()
+//                  << " packed "<<bin->isPacked()
+//                  << "\n";
+//    }
+//#endif // INSTRUMENT
 
 }
 int BinCount( cPackEngine& e)
