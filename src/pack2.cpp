@@ -108,22 +108,22 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 //    }
 //    else
 //    {
-        bin_t newbin = bin_t( new cBin( "", xs3, ys3 ));
-        newbin->locate( bin->locX() + item->sizX(), bin->locY() );
-        if( bin->isSub() )
-            newbin->parent( bin->parent() );
-        else
-            newbin->parent( bin );
-        e.add( newbin );
-        //cout << "added3 " << newbin->text();
-        newbin = bin_t( new cBin( "", xs4, ys4 ));
-        newbin->locate( bin->locX(), bin->locY() + item->sizY() );
-        if( bin->isSub() )
-            newbin->parent( bin->parent() );
-        else
-            newbin->parent( bin );
-        e.add( newbin );
-        //cout << "added4 " << newbin->text();
+    bin_t newbin = bin_t( new cBin( "", xs3, ys3 ));
+    newbin->locate( bin->locX() + item->sizX(), bin->locY() );
+    if( bin->isSub() )
+        newbin->parent( bin->parent() );
+    else
+        newbin->parent( bin );
+    e.add( newbin );
+    //cout << "added3 " << newbin->text();
+    newbin = bin_t( new cBin( "", xs4, ys4 ));
+    newbin->locate( bin->locX(), bin->locY() + item->sizY() );
+    if( bin->isSub() )
+        newbin->parent( bin->parent() );
+    else
+        newbin->parent( bin );
+    e.add( newbin );
+    //cout << "added4 " << newbin->text();
 //    }
 
     MergeUnusedOnRight( e );
@@ -323,6 +323,244 @@ void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
         }
     }
 }
+/** check for overlap
+// https://stackoverflow.com/a/3269471/16582
+// [x1:x2] and [y1:y2],
+// x1 <= y2 && y1 <= x2
+*/
+static std::pair<int,int> isOverlap( int ra1, int ra2, int rb1, int rb2 )
+{
+    if( ! ( ra1 <= rb2 && rb1 < ra2 ) )
+        return std::make_pair(-1,-1);
+    return std::make_pair(
+               std::max( ra1, rb1 ),
+               std::min( ra2, rb2 ));
+
+}
+class cRange
+{
+public:
+    int first;
+    int second;
+    bool valid;
+    cRange()
+        : valid( false )
+    {
+
+    }
+    cRange( int a, int b )
+        : first( a )
+        , second( b )
+        , valid( a < b )
+    {
+
+    }
+};
+class cRangeOverlap
+{
+public:
+    cRange a;   // first input range
+    cRange b;   // second input range
+    cRange o;   // overlap, -1,-1 if no overlap
+    cRange ae;  // extra in first range
+    cRange be;  // extra in second range
+
+
+    void Calculate()
+    {
+        o.valid = false;
+        ae.valid = false;
+        be.valid = false;
+
+        if( ! ( a.valid && b.valid ) )
+            return;
+
+        if( ! isOverlap() )
+            return;
+
+        // calculate the overlap range
+        o.first  = std::max( a.first, b.first );
+        o.second = std::min( a.second, b.second );
+        o.valid  = true;
+
+        if( a.first < o.first )
+        {
+            ae.first = a.first;
+            ae.second = o.first;
+            ae.valid = true;
+        }
+        if( a.second > o.second )
+        {
+            ae.first = o.second;
+            ae.second = a.second;
+            ae.valid = true;
+        }
+        if( b.first < o.first )
+        {
+            be.first = b.first;
+            be.second = o.first;
+            be.valid = true;
+        }
+        if( b.second > o.second )
+        {
+            be.first = o.second;
+            be.second = b.second;
+            be.valid = true;
+        }
+
+    }
+private:
+    bool isSane()
+    {
+        if( a.first >= a.second )
+            return false;
+        if( b.first >= a.second )
+            return false;
+        return true;
+    }
+    /** https://stackoverflow.com/a/3269471/16582
+    // [x1:x2] and [y1:y2],
+    // x1 <= y2 && y1 <= x2
+    */
+    bool isOverlap()
+    {
+        return ( a.first <= b.second && b.first < a.second );
+    }
+};
+
+void MergePairs( cPackEngine& e )
+{
+    bool fmerged = true;
+    while( fmerged )
+    {
+        fmerged = false;
+        for( auto sub1 : e.bins() )
+        {
+            if( ! sub1->isSub() )
+                continue;
+            if( sub1->isUsed() )
+                continue;
+
+            for( auto sub2 : e.bins() )
+            {
+                if( ! sub2->isSub() )
+                    continue;
+                if( sub2->isUsed() )
+                    continue;
+                if( sub1->parent()->progID() != sub2->parent()->progID() )
+                    continue;
+                if( sub1->progID() == sub2->progID() )
+                    continue;
+
+                fmerged = MergePair( e, sub1, sub2 );
+                if( fmerged )
+                    break;
+            }
+            if( fmerged )
+                break;
+        }
+    }
+}
+
+bool MergePair( cPackEngine& e, bin_t sub1, bin_t sub2 )
+{
+    if( sub2->right() == sub1->locX() )
+    {
+        // sub2 to right of sub1
+        // check for overlap
+
+        cRangeOverlap overlap;
+        overlap.a = cRange( sub1->locY(), sub1->bottom() );
+        overlap.b = cRange( sub2->locY(), sub2->bottom() );
+        overlap.Calculate();
+        if( overlap.o.valid )
+        {
+            // will merging give a larger space
+            int mwidth = sub1->sizX()+sub2->sizX();
+            int mheight = overlap.o.second - overlap.o.first;
+            int ma = mwidth * mheight;
+            if(  ma > sub1->size() && ma > sub2->size() )
+            {
+                bin_t merge = bin_t( new cBin(
+                                         sub1->parent(),
+                                         sub2->locX(), overlap.o.first,
+                                         mwidth, mheight  ));
+                //std::cout << "merge " << merge->text();
+                e.add( merge );
+
+                if( overlap.ae.valid )
+                {
+                    sub1->locY( overlap.ae.first );
+                    sub1->sizY( overlap.ae.second - overlap.ae.first );
+                }
+                else
+                    sub1->sizY( 0 );
+
+                if( overlap.be.valid )
+                {
+                    sub2->locY( overlap.be.first );
+                    sub2->sizY( overlap.be.second - overlap.be.first );
+                }
+                else
+                    sub2->sizY( 0 );
+
+                RemoveZeroBins( e );
+
+                return true;
+
+            }
+        }
+    }
+    if( sub2->bottom() == sub1->locY() )
+    {
+        // sub2 above sub1
+        // check for overlap
+
+        cRangeOverlap overlap;
+        overlap.a = cRange( sub1->locX(), sub1->right() );
+        overlap.b = cRange( sub2->locX(), sub2->right() );
+        overlap.Calculate();
+        if( overlap.o.valid )
+        {
+            // will merging give a larger space
+            int mwidth = overlap.o.second - overlap.o.first;
+            int mheight = sub1->sizY() + sub2->sizY();
+            int ma = mwidth * mheight;
+            if(  ma > sub1->size() && ma > sub2->size() )
+            {
+                bin_t merge = bin_t( new cBin(
+                                         sub1->parent(),
+                                         overlap.o.first, sub2->locY(),
+                                         mwidth, mheight  ));
+                //std::cout << "merge " << merge->text();
+                e.add( merge );
+
+                if( overlap.ae.valid )
+                {
+                    sub1->locX( overlap.ae.first );
+                    sub1->sizX( overlap.ae.second - overlap.ae.first );
+                }
+                else
+                    sub1->sizX( 0 );
+
+                if( overlap.be.valid )
+                {
+                    sub2->locX( overlap.be.first );
+                    sub2->sizX( overlap.be.second - overlap.be.first );
+                }
+                else
+                    sub2->sizX( 0 );
+
+                RemoveZeroBins( e );
+
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
 void Merge( cPackEngine& e, bin_t above, bin_t below )
 {
     std::cout << "Merge " << above->text();
@@ -359,6 +597,31 @@ void Merge( cPackEngine& e, bin_t above, bin_t below )
     std::cout << " gives " << mergebin1->text();
     std::cout << "       " << mergebin2->text();
 }
+static vector< bin_t > UnusedBinsOnRight( cPackEngine& e, bin_t base )
+{
+    vector< bin_t > ret;
+
+    for( auto sub : e.bins() )
+    {
+        if( ! sub->isSub() )
+            continue;
+        if( sub->parent()->progID() != base->progID() )
+            continue;
+        if( sub->isPacked() )
+            continue;
+        if( sub->right() != base->right() )
+            continue;
+        if(  sub->sizX() < e.Algorithm().MergeOnRightCandMinWidth )
+            continue;
+
+        ret.push_back( sub );
+
+#ifdef INSTRUMENT
+        std::cout << "candidate " << sub->text();
+#endif
+    }
+    return ret;
+}
 void MergeUnusedOnRight( cPackEngine& e )
 {
     vector< bin_t > vmerges;
@@ -373,26 +636,23 @@ void MergeUnusedOnRight( cPackEngine& e )
         std::cout << "Looking for merge on right in " << base->text();
 #endif // INSTRUMENT
 
+        vector< bin_t > vcan = UnusedBinsOnRight( e, base );
+
+        // where at least 2 condidates found?
+        if( vcan.size() < 2 )
+            continue;
+
         int narrowest, topmost, bottommost, biggest;
-        vector< bin_t > vcan;
-        for( auto sub : e.bins() )
+        bool first = true;
+        for( auto sub : vcan )
         {
-            if( ! sub->isSub() )
-                continue;
-            if( sub->parent()->progID() != base->progID() )
-                continue;
-            if( sub->isPacked() )
-                continue;
-            if( sub->right() != base->right() )
-                continue;
-            if(  sub->sizX() < e.Algorithm().MergeOnRightCandMinWidth )
-                continue;
-            if( ! vcan.size() )
+            if( first )
             {
                 narrowest = sub->sizX();
                 topmost   = sub->locY();
                 bottommost= sub->bottom();
                 biggest   = sub->size();
+                first = false;
             }
             else
             {
@@ -405,15 +665,8 @@ void MergeUnusedOnRight( cPackEngine& e )
                 if( sub->size() > biggest )
                     biggest = sub->size();
             }
-            vcan.push_back( sub );
-#ifdef INSTRUMENT
-            std::cout << "candidate " << sub->text();
-#endif
-        }
 
-        // where at least 2 condidates found?
-        if( vcan.size() < 2 )
-            continue;
+        }
 
         ///  check that no breaks among candidates in Y direction
         sort( vcan.begin(), vcan.end(),
@@ -441,14 +694,17 @@ void MergeUnusedOnRight( cPackEngine& e )
         if( ! fOK )
             continue;
 
-#ifdef INSTRUMENT
-        std::cout << "narrowest " << narrowest << "\n";
-#endif // INSTRUMENT
-
         int mxs = narrowest;
         int mys = bottommost - topmost;
-//        if( mxs * mys < biggest )
-//            return;
+
+#ifdef INSTRUMENT
+        std::cout << "narrowest " << narrowest
+                  << " biggest " << biggest
+                  << " mxs " << mxs << " mys " << mys << "\n";
+#endif // INSTRUMENT
+
+        if( mxs * mys < biggest )
+            return;
 
         int mxl = base->right() - narrowest;
         for( auto b : vcan )

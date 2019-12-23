@@ -33,7 +33,9 @@
 		<Compiler>
 			<Add option="-Wall" />
 			<Add option="-fexceptions" />
+			<Add directory="$(#ravenset)" />
 		</Compiler>
+		<Unit filename="../../../raven-set/cutest.cpp" />
 		<Unit filename="../../src/cCut.cpp" />
 		<Unit filename="../../src/main.cpp" />
 		<Unit filename="../../src/pack2.cpp" />
