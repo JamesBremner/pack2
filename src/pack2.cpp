@@ -39,11 +39,30 @@ std::string cBin::text()
     return ss.str();
 }
 
+bool CheckForOverlap( cPackEngine& e, bin_t space )
+{
+    bin_t bin = space->parent();
+    for( bin_t packed : e.bins() )
+    {
+        if( ! packed->isSub() )
+            return false;
+        if( ! packed->isPacked() )
+            return false;
+        if( packed->parent() != space->parent() )
+            return false;
+        return packed->isOverlap( *space.get() );
+    }
+    return false;
+}
+
 void Add( cPackEngine& e, bin_t bin, item_t item )
 {
 #ifdef INSTRUMENT
     cout << "Adding item " << item->progID() << " to bin " << bin->progID() << "\n";
 #endif // INSTRUMENT
+
+    if( CheckForOverlap( e, bin ) )
+       throw std::runtime_error("Adding an overlapped item");
 
     // if adding first item to root bin
     // and there is an endless supply available
@@ -126,7 +145,9 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     //cout << "added4 " << newbin->text();
 //    }
 
-    MergeUnusedOnRight( e );
+    MergePairs( e );
+
+    //MergeUnusedOnRight( e );
 
     //MergeUnusedFromBottomRight( e, bin );
 }
@@ -323,20 +344,7 @@ void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
         }
     }
 }
-/** check for overlap
-// https://stackoverflow.com/a/3269471/16582
-// [x1:x2] and [y1:y2],
-// x1 <= y2 && y1 <= x2
-*/
-static std::pair<int,int> isOverlap( int ra1, int ra2, int rb1, int rb2 )
-{
-    if( ! ( ra1 <= rb2 && rb1 < ra2 ) )
-        return std::make_pair(-1,-1);
-    return std::make_pair(
-               std::max( ra1, rb1 ),
-               std::min( ra2, rb2 ));
 
-}
 class cRange
 {
 public:
@@ -424,7 +432,7 @@ private:
     */
     bool isOverlap()
     {
-        return ( a.first <= b.second && b.first < a.second );
+        return ( a.first <= b.second && b.first <= a.second );
     }
 };
 
@@ -438,14 +446,14 @@ void MergePairs( cPackEngine& e )
         {
             if( ! sub1->isSub() )
                 continue;
-            if( sub1->isUsed() )
+            if( sub1->isPacked() )
                 continue;
 
             for( auto sub2 : e.bins() )
             {
                 if( ! sub2->isSub() )
                     continue;
-                if( sub2->isUsed() )
+                if( sub2->isPacked() )
                     continue;
                 if( sub1->parent()->progID() != sub2->parent()->progID() )
                     continue;
@@ -485,8 +493,12 @@ bool MergePair( cPackEngine& e, bin_t sub1, bin_t sub2 )
                                          sub1->parent(),
                                          sub2->locX(), overlap.o.first,
                                          mwidth, mheight  ));
-                //std::cout << "merge " << merge->text();
                 e.add( merge );
+
+#ifdef INSTRUMENT
+                std::cout << "merge from\n" << sub1->text() << sub2->text();
+                std::cout << sub1->size() <<" "<< sub2->size() <<" "<< ma << "\n";
+#endif // INSTRUMENT
 
                 if( overlap.ae.valid )
                 {
@@ -503,6 +515,12 @@ bool MergePair( cPackEngine& e, bin_t sub1, bin_t sub2 )
                 }
                 else
                     sub2->sizY( 0 );
+
+#ifdef INSTRUMENT
+                std::cout << "to " << merge->text();
+                std::cout << sub1->text();
+                std::cout << sub2->text() << "\n";
+#endif // INSTRUMENT
 
                 RemoveZeroBins( e );
 
@@ -532,7 +550,10 @@ bool MergePair( cPackEngine& e, bin_t sub1, bin_t sub2 )
                                          sub1->parent(),
                                          overlap.o.first, sub2->locY(),
                                          mwidth, mheight  ));
-                //std::cout << "merge " << merge->text();
+#ifdef INSTRUMENT
+                std::cout << "merge from " << sub1->text() << sub2->text();
+#endif // INSTRUMENT
+
                 e.add( merge );
 
                 if( overlap.ae.valid )
@@ -550,6 +571,12 @@ bool MergePair( cPackEngine& e, bin_t sub1, bin_t sub2 )
                 }
                 else
                     sub2->sizX( 0 );
+
+#ifdef INSTRUMENT
+                std::cout << "to " << merge->text();
+                std::cout << sub1->text();
+                std::cout << sub2->text() << "\n";
+#endif // INSTRUMENT
 
                 RemoveZeroBins( e );
 
@@ -961,8 +988,8 @@ bool Fits( item_t item, bin_t bin )
     std::cout << "Trying to fit item " << item->progID() <<" "<< item->userID()
               <<" " << item->sizX() <<"x"<< item->sizY()
               << " into bin ";
-    if( bin->parent() )
-        std::cout << bin->parent()->userID();
+//    if( bin->parent() )
+//        std::cout << bin->parent()->userID();
     std::cout <<" "<<bin->text();
 #endif // INSTRUMENT
 

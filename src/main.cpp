@@ -9,6 +9,27 @@ using namespace std;
 
 #include "pack2.h"
 
+/*
+merge from BWPCENPLY16_GREY_21091HGL_cpy2  100 3174x5292 at 7484 6908
+BWPCENPLY16_GREY_21091HGL_cpy2  99 7484x1824 at 0 10376
+to BWPCENPLY16_GREY_21091HGL_cpy2  101 10658x1824 at 0 10376
+BWPCENPLY16_GREY_21091HGL_cpy2  100 3174x3468 at 7484 6908
+BWPCENPLY16_GREY_21091HGL_cpy2  99 7484x0 at 0 10376
+*/
+TEST( MergePairs8 )
+{
+    pack2::cPackEngine thePackEngine;
+    pack2::bin_t b;
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 24400,12200 ));
+    thePackEngine.add( b );
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 7484, 6908, 3174, 5292 )));
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 0, 10376, 7484, 1824 )));
+    MergePairs( thePackEngine );
+
+    for( pack2::bin_t b : thePackEngine.bins() )
+        std::cout << b->text();
+}
+
 TEST( MergePairs1 )
 {
     pack2::cPackEngine thePackEngine;
@@ -95,15 +116,15 @@ TEST( MergePairs4 )
     pack2::cPackEngine thePackEngine;
     pack2::bin_t b;
 
-    // equal spaces adjacent left/right even
+    // equal spaces adjacentup/down even
     b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 30, 20, 20 )));
     MergePairs( thePackEngine );
 
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
+//    for( pack2::bin_t b : thePackEngine.bins() )
+//        std::cout << b->text();
 
     CHECK_EQUAL( 2, (int)thePackEngine.bins().size() );
     CHECK_EQUAL(50, thePackEngine.bins()[1]->locX());
@@ -117,7 +138,7 @@ TEST( MergePairs5 )
     pack2::cPackEngine thePackEngine;
     pack2::bin_t b;
 
-    // equal spaces adjacent left/right top to left
+    // equal spaces adjacent up/down top to left
     b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
@@ -141,6 +162,53 @@ TEST( MergePairs5 )
     CHECK_EQUAL(19, thePackEngine.bins()[3]->sizX());
     CHECK_EQUAL(40, thePackEngine.bins()[3]->sizY());
 }
+
+TEST( MergePairs6 )
+{
+    pack2::cPackEngine thePackEngine;
+    pack2::bin_t b;
+
+    // equal spaces adjacent up/down top to right
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    thePackEngine.add( b );
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 51, 30, 20, 20 )));
+    MergePairs( thePackEngine );
+
+    for( pack2::bin_t b : thePackEngine.bins() )
+        std::cout << b->text();
+
+    CHECK_EQUAL( 4, (int)thePackEngine.bins().size() );
+    CHECK_EQUAL(50, thePackEngine.bins()[1]->locX());
+    CHECK_EQUAL(50, thePackEngine.bins()[1]->locY());
+    CHECK_EQUAL(1, thePackEngine.bins()[1]->sizX());
+    CHECK_EQUAL(20, thePackEngine.bins()[1]->sizY());
+    CHECK_EQUAL(70, thePackEngine.bins()[2]->locX());
+    CHECK_EQUAL(30, thePackEngine.bins()[2]->locY());
+    CHECK_EQUAL(1, thePackEngine.bins()[2]->sizX());
+    CHECK_EQUAL( 20, thePackEngine.bins()[2]->sizY());
+    CHECK_EQUAL(51, thePackEngine.bins()[3]->locX());
+    CHECK_EQUAL(30, thePackEngine.bins()[3]->locY());
+    CHECK_EQUAL(19, thePackEngine.bins()[3]->sizX());
+    CHECK_EQUAL(40, thePackEngine.bins()[3]->sizY());
+}
+
+TEST( MergePairs7 )
+{
+    pack2::cPackEngine thePackEngine;
+    pack2::bin_t b;
+
+    // equal spaces adjacent up/down top to right
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    thePackEngine.add( b );
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 51, 30, 20, 20 )));
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
+    MergePairs( thePackEngine );
+
+    for( pack2::bin_t b : thePackEngine.bins() )
+        std::cout << b->text();
+}
+
 
 int main()
 {

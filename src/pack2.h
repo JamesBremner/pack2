@@ -110,7 +110,7 @@ public:
         myLocX = x;
         myLocY = y;
     }
-    int locX()
+    int locX() const
     {
         return myLocX;
     }
@@ -118,7 +118,7 @@ public:
     {
         myLocX = lx;
     }
-    int locY()
+    int locY() const
     {
         return myLocY;
     }
@@ -146,10 +146,16 @@ public:
     {
         return myX * myY;
     }
+    bool isOverlap( const cShape& other )
+    {
+        return ( myLocX <= other.right() && other.locX() <= right()
+                && myLocY <= other.bottom() && other.locY() <= bottom() );
+    }
     std::string text() const
     {
         std::stringstream ss;
         ss << myUserID <<" "<< myProgID <<" "<< myX <<" x " << myY;
+        if( isPacked() ) ss << " packed";
         return ss.str();
     }
 private:
@@ -332,6 +338,7 @@ private:
 
 /// pack item into bin
 void Add( cPackEngine& e, bin_t bin, item_t item );
+bool CheckForOverlap( cPackEngine& e, bin_t space );
 
 void MergeUnusedSpace( cPackEngine& e, bin_t mewbin );
 void MergeUnusedOnRight( cPackEngine& e );
