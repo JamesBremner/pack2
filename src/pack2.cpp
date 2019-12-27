@@ -62,7 +62,7 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 #endif // INSTRUMENT
 
     if( CheckForOverlap( e, bin ) )
-       throw std::runtime_error("Adding an overlapped item");
+        throw std::runtime_error("Adding an overlapped item");
 
     // if adding first item to root bin
     // and there is an endless supply available
@@ -145,7 +145,7 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     //cout << "added4 " << newbin->text();
 //    }
 
-    MergePairs( e );
+    MergePairs( e, bin );
 
     //MergeUnusedOnRight( e );
 
@@ -436,31 +436,36 @@ private:
     }
 };
 
-void MergePairs( cPackEngine& e )
+void MergePairs( cPackEngine& e, bin_t bin )
 {
+    if( bin->parent() )
+        bin = bin->parent();
+
     bool fmerged = true;
     while( fmerged )
     {
         fmerged = false;
-        for( auto sub1 : e.bins() )
+        for( auto space1 : e.bins() )
         {
-            if( ! sub1->isSub() )
+            if( ! space1->isSub() )
                 continue;
-            if( sub1->isPacked() )
+            if( space1->isPacked() )
+                continue;
+            if( space1->parent()->progID() != bin->progID() )
                 continue;
 
-            for( auto sub2 : e.bins() )
+            for( auto space2 : e.bins() )
             {
-                if( ! sub2->isSub() )
+                if( ! space2->isSub() )
                     continue;
-                if( sub2->isPacked() )
+                if( space2->isPacked() )
                     continue;
-                if( sub1->parent()->progID() != sub2->parent()->progID() )
+                if( space1->parent()->progID() != space2->parent()->progID() )
                     continue;
-                if( sub1->progID() == sub2->progID() )
+                if( space1->progID() == space2->progID() )
                     continue;
 
-                fmerged = MergePair( e, sub1, sub2 );
+                fmerged = MergePair( e, space1, space2 );
                 if( fmerged )
                     break;
             }
@@ -810,7 +815,7 @@ void MergeUnusedSpace( cPackEngine& e, bin_t newbin )
                 mergebin->parent( bin->parent() );
             else
                 mergebin->parent( bin );
-            cout << mergebin->text();
+//            cout << mergebin->text();
 
             int exl, eyl, exs, eys;
             if( newWidest )
@@ -885,7 +890,9 @@ void Pack( cPackEngine& e )
     // so the smaller may fit into odd remaining spaces
     //SortItemsIntoDecreasingSize( e );
 
-    SortItemsIntoDecreasingAwkward( e );
+    //SortItemsIntoDecreasingAwkward( e );
+
+    SortItemsDecreasingSquaredDim( e );
 
     PackSortedItems( e );
 
@@ -1047,6 +1054,16 @@ void SortItemsIntoDecreasingSize( cPackEngine& e )
         return a->size() > b->size();
     });
 }
+void SortItemsDecreasingSquaredDim( cPackEngine& e )
+{
+    std::vector<item_t>& items = e.items();
+    sort( items.begin(), items.end(),
+          []( item_t a, item_t b )
+    {
+        return ( a->sizX() * a->sizX() + a->sizY() * a->sizY() ) >
+               ( b->sizX() * b->sizX() + b->sizY() * b->sizY() );
+    });
+}
 void SortItemsIntoDecreasingAwkward( cPackEngine& e )
 {
     itemv_t most_awkward;
@@ -1083,13 +1100,17 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
     sort( bins.begin(), bins.end(),
           []( bin_t a, bin_t b )
     {
-        // return true if a smaller than b and in lower or same copy count bin
-        if( a->size() < b->size() )
+        // always sort spaces first from lower copy counts
+        int ac = a->copyCount();
+        int bc = b->copyCount();
+        if( ac != bc )
         {
-//            if( ( a->isPacked()) && ( ! b->isPacked() ) )
-//                return false;
-            if( a->copyCount() <= b->copyCount() )
-                return true;
+            return ac < bc;
+        }
+        // sort speces first that have a smaller area
+        if( a->size() <= b->size() )
+        {
+             return true;
         }
         return false;
     });

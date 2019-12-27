@@ -260,10 +260,13 @@ public:
     /// get copy count of root bin
     int copyCount()
     {
+        int ret;
         if( myParent )
-            return myParent->copyCount();
+            ret = myParent->copyCount();
         else
-            return myCopyCount;
+            ret = myCopyCount;
+        //std::cout << "copycount " << progID() <<" " << ret << "\n";
+        return ret;
     }
     std::string text();
 
@@ -344,7 +347,7 @@ void MergeUnusedSpace( cPackEngine& e, bin_t mewbin );
 void MergeUnusedOnRight( cPackEngine& e );
 void Merge( cPackEngine& e, bin_t above, bin_t below );
 void MergeUnusedFromBottomRight( cPackEngine& e,  bin_t bin );
-void MergePairs( cPackEngine& e );
+void MergePairs( cPackEngine& e,  bin_t bin );
 bool MergePair( cPackEngine& e, bin_t space1, bin_t space2 );
 
 /// Remove unused and sub bins
@@ -353,6 +356,7 @@ void RemoveZeroBins( cPackEngine& e );
 
 void SortItemsIntoDecreasingSize( cPackEngine& e );
 void SortItemsIntoDecreasingAwkward( cPackEngine& e );
+void SortItemsDecreasingSquaredDim( cPackEngine& e );
 
 /// sort bins into increasing size AND copy count
 void SortBinsIntoIncreasingSize( cPackEngine& e );

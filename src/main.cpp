@@ -9,6 +9,33 @@ using namespace std;
 
 #include "pack2.h"
 
+
+TEST( SortBinsIntoIncreasingSize )
+{
+    pack2::cPackEngine thePackEngine;
+    pack2::bin_t b;
+
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    thePackEngine.add( b );
+    pack2::bin_t b2 = pack2::bin_t( new pack2::cBin( b ));
+    thePackEngine.add( b2 );
+
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b2, 50, 50, 3, 3 )));
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 10, 10 )));
+    thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 60, 60, 5, 5 )));
+
+    SortBinsIntoIncreasingSize( thePackEngine );
+
+//    for( pack2::bin_t b : thePackEngine.bins() )
+//        std::cout << b->text();
+
+    CHECK_EQUAL( 5, thePackEngine.bins()[0]->sizX() );
+    CHECK_EQUAL( 10, thePackEngine.bins()[1]->sizX() );
+    CHECK_EQUAL( 3, thePackEngine.bins()[3]->sizX() );
+
+}
+
+
 /*
 merge from BWPCENPLY16_GREY_21091HGL_cpy2  100 3174x5292 at 7484 6908
 BWPCENPLY16_GREY_21091HGL_cpy2  99 7484x1824 at 0 10376
@@ -24,10 +51,10 @@ TEST( MergePairs8 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 7484, 6908, 3174, 5292 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 0, 10376, 7484, 1824 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
+//    for( pack2::bin_t b : thePackEngine.bins() )
+//        std::cout << b->text();
 }
 
 TEST( MergePairs1 )
@@ -40,7 +67,7 @@ TEST( MergePairs1 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 30, 50, 20, 20 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 //    for( pack2::bin_t b : thePackEngine.bins() )
 //        std::cout << b->text();
 
@@ -61,7 +88,7 @@ TEST( MergePairs2 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 30, 49, 20, 20 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 
 //    for( pack2::bin_t b : thePackEngine.bins() )
 //        std::cout << b->text();
@@ -91,7 +118,7 @@ TEST( MergePairs3 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 30, 51, 20, 20 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 
 //    for( pack2::bin_t b : thePackEngine.bins() )
 //        std::cout << b->text();
@@ -121,7 +148,7 @@ TEST( MergePairs4 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 30, 20, 20 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 
 //    for( pack2::bin_t b : thePackEngine.bins() )
 //        std::cout << b->text();
@@ -143,7 +170,7 @@ TEST( MergePairs5 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 49, 30, 20, 20 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 
 //    for( pack2::bin_t b : thePackEngine.bins() )
 //        std::cout << b->text();
@@ -173,10 +200,10 @@ TEST( MergePairs6 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 51, 30, 20, 20 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
+//    for( pack2::bin_t b : thePackEngine.bins() )
+//        std::cout << b->text();
 
     CHECK_EQUAL( 4, (int)thePackEngine.bins().size() );
     CHECK_EQUAL(50, thePackEngine.bins()[1]->locX());
@@ -203,10 +230,10 @@ TEST( MergePairs7 )
     thePackEngine.add( b );
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 51, 30, 20, 20 )));
     thePackEngine.add( pack2::bin_t( new pack2::cBin( b, 50, 50, 20, 20 )));
-    MergePairs( thePackEngine );
+    MergePairs( thePackEngine, b );
 
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
+//    for( pack2::bin_t b : thePackEngine.bins() )
+//        std::cout << b->text();
 }
 
 
@@ -217,101 +244,6 @@ int main()
 
     raven::set::UnitTest::RunAllTests();
 
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    thePackEngine.add( b );
-    b->add( pack2::item_t( new pack2::cItem("i1",0,0)));
-    pack2::bin_t space = pack2::bin_t( new pack2::cBin( b, 80, 80, 20, 20 ));
-    thePackEngine.add( space );
-    space = pack2::bin_t( new pack2::cBin( b, 95, 60, 5, 80 ));
-    thePackEngine.add( space );
-    MergeUnusedOnRight( thePackEngine );
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    space = pack2::bin_t( new pack2::cBin( "", 20, 20 ));
-    space->locate( 80, 80 );
-    space->parent( b );
-    thePackEngine.add( space );
-    space = pack2::bin_t( new pack2::cBin( b, 80, 60, 20, 20 ));
-    thePackEngine.add( space );
-    MergeUnusedFromBottomRight( thePackEngine, b );
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
-
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    space = pack2::bin_t( new pack2::cBin( "", 20, 20 ));
-    space->locate( 80, 80 );
-    space->parent( b );
-    thePackEngine.add( space );
-    space = pack2::bin_t( new pack2::cBin( "", 10, 20 ));
-    space->locate( 70, 70 );
-    space->parent( b );
-    thePackEngine.add( space );
-    space = pack2::bin_t( new pack2::cBin( "", 20, 10 ));
-    space->locate( 60, 90 );
-    space->parent( b );
-    thePackEngine.add( space );
-    MergeUnusedFromBottomRight( thePackEngine, b );
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
-    if( thePackEngine.bins().size() != 3 )
-    {
-        std::cout << "Failed 10\n";
-        return 1;
-    }
-    if( thePackEngine.bins()[0]->size() != 100 )
-    {
-        std::cout << "Failed 11\n";
-        return 1;
-    }
-    if( thePackEngine.bins()[1]->size() != 100 )
-    {
-        std::cout << "Failed 12\n";
-        return 1;
-    }
-    if( thePackEngine.bins()[2]->size() != 600 )
-    {
-        std::cout << "Failed 13\n";
-        return 1;
-    }
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    space = pack2::bin_t( new pack2::cBin( "", 20, 20 ));
-    space->locate( 80, 80 );
-    space->parent( b );
-    thePackEngine.add( space );
-    space = pack2::bin_t( new pack2::cBin( "", 10, 10 ));
-    space->locate( 70, 80 );
-    space->parent( b );
-    thePackEngine.add( space );
-    space = pack2::bin_t( new pack2::cBin( "", 20, 10 ));
-    space->locate( 60, 90 );
-    space->parent( b );
-    thePackEngine.add( space );
-    MergeUnusedFromBottomRight( thePackEngine, b );
-    for( pack2::bin_t b : thePackEngine.bins() )
-        std::cout << b->text();
-    if( thePackEngine.bins().size() != 2 )
-    {
-        std::cout << "Failed 2-1\n";
-        return 1;
-    }
-    if( thePackEngine.bins()[0]->size() != 100 )
-    {
-        std::cout << "Failed 2-2\n";
-        return 1;
-    }
-    if( thePackEngine.bins()[1]->size() != 600 )
-    {
-        std::cout << "Failed 2-3\n";
-        return 1;
-    }
 
     thePackEngine.clear();
     b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
