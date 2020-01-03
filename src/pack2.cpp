@@ -886,24 +886,30 @@ void MergeUnusedSpace( cPackEngine& e, bin_t newbin )
 
 void Pack( cPackEngine& e )
 {
-    // try packing larger items first
-    // so the smaller may fit into odd remaining spaces
-    //SortItemsIntoDecreasingSize( e );
-
-    //SortItemsIntoDecreasingAwkward( e );
-
+    /* try packing larger items first
+     so the smaller may fit into odd remaining spaces
+     Use a a measure of size the sum of squares of the individual width snd length
+     so that long thin items are packed first becuase such items are awkward to fit into odd spaces
+    */
     SortItemsDecreasingSquaredDim( e );
 
     PackSortedItems( e );
 
     if( e.Algorithm().fTryEveryItemFirst )
     {
+        // if requested try fitting every item first
+        // perhaps a better fit may be found!
+
         int bestBinCount = BinCount( e );
 
         vector<item_t> sortedItems = e.items();
 
+        bool improved = false;
+
+        // loop over items
         for( int firstItem = 1; firstItem < (int)e.items().size(); firstItem++ )
         {
+            // arrange for each item in turn to be fitted first
             e.items().clear();
             e.items().push_back( sortedItems[ firstItem ] );
             for( auto i : sortedItems )
@@ -913,15 +919,25 @@ void Pack( cPackEngine& e )
                 e.items().push_back( i );
             }
 
+            // try packing this item first
             PackSortedItems( e );
 
-            if( BinCount( e ) < bestBinCount )
-                return;
+            // check for an improvement
+            if( BinCount( e ) < bestBinCount ) {
+                improved = true;
+                break;
+            }
         }
 
-        e.items() = sortedItems;
-        PackSortedItems( e );
+        if( ! improved ) {
+
+            // no improvement, so redo the original pack
+            e.items() = sortedItems;
+            PackSortedItems( e );
+        }
     }
+    cout << "all items successfully packed in "
+         << BinCount( e ) << " bins\n";
 }
 
 void PackSortedItems( cPackEngine& e )
@@ -971,8 +987,6 @@ void PackSortedItems( cPackEngine& e )
 
         if( ! unpackedfound )
         {
-            cout << "all items successfully packed in "
-                 << BinCount( e ) << " bins\n";
             break;
         }
         if( ! itemPacked )
@@ -1110,7 +1124,7 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
         // sort speces first that have a smaller area
         if( a->size() <= b->size() )
         {
-             return true;
+            return true;
         }
         return false;
     });
