@@ -9,6 +9,21 @@ using namespace std;
 
 #include "pack2.h"
 
+TEST( tid11 )
+{
+    pack2::cPackEngine thePackEngine;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+    b->copyEnable();
+    thePackEngine.add( b );
+    //thePackEngine.addItem( "621_1", 914,316 );
+    thePackEngine.addItem( "621_2", 1100,500 );
+    thePackEngine.addItem( "621_3", 1600,500 );
+    //thePackEngine.addItem( "621_4", 1600,250 );
+    thePackEngine.addItem( "621_5", 1200,250 );
+    Pack( thePackEngine );
+
+    exit(0);
+}
 
 TEST( SortBinsIntoIncreasingSize )
 {

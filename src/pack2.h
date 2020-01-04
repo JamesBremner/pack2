@@ -349,6 +349,7 @@ void Merge( cPackEngine& e, bin_t above, bin_t below );
 void MergeUnusedFromBottomRight( cPackEngine& e,  bin_t bin );
 void MergePairs( cPackEngine& e,  bin_t bin );
 bool MergePair( cPackEngine& e, bin_t space1, bin_t space2 );
+void MergeTriple( cPackEngine& e,  bin_t bin );
 
 /// Remove unused and sub bins
 void RemoveUnusedBins( cPackEngine& e );

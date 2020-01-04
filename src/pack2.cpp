@@ -2,7 +2,7 @@
 
 #include "pack2.h"
 
-//#define INSTRUMENT 1
+#define INSTRUMENT 1
 
 using namespace std;
 
@@ -146,6 +146,8 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 //    }
 
     MergePairs( e, bin );
+
+    MergeTriple( e, bin );
 
     //MergeUnusedOnRight( e );
 
@@ -435,6 +437,72 @@ private:
         return ( a.first <= b.second && b.first <= a.second );
     }
 };
+void MergeTriple( cPackEngine& e,  bin_t bin )
+{
+    if( bin->parent() )
+        bin = bin->parent();
+
+    std::vector< bin_t > vspace;
+    for( auto space : e.bins() )
+    {
+        if( ! space->isSub() )
+            continue;
+        if( space->isPacked() )
+            continue;
+        if( space->parent()->progID() != bin->progID() )
+            continue;
+        vspace.push_back( space );
+    }
+    if( (int) vspace.size() < 3 )
+        return;
+
+    bin_t bottom_right;
+    for( auto space : vspace )
+    {
+        if( space->right() == bin->right() && space->bottom() == bin->bottom() )
+        {
+            bottom_right = space;
+            break;
+        }
+    }
+    if( ! bottom_right )
+        return;
+
+    std::cout << "bottom_right " << bottom_right->text();
+
+    bin_t right;
+    for( auto space : vspace )
+    {
+        if( space->progID() == bottom_right->progID() )
+            continue;
+        if( space->right() == bin->right() && space->bottom() == bottom_right->locY() )
+        {
+            right = space;
+            break;
+        }
+    }
+    bin_t left;
+    for( auto space : vspace )
+    {
+        if( space->progID() == bottom_right->progID() )
+            continue;
+        if( space->right() == bottom_right->locX() && space->bottom() == bin->bottom() )
+        {
+            left = space;
+            break;
+        }
+    }
+    bin_t lr;
+    if( left )
+        lr = left;
+    if( right )
+        lr = right;
+    if( ! lr )
+        return;
+
+
+
+}
 
 void MergePairs( cPackEngine& e, bin_t bin )
 {
@@ -556,7 +624,8 @@ bool MergePair( cPackEngine& e, bin_t sub1, bin_t sub2 )
                                          overlap.o.first, sub2->locY(),
                                          mwidth, mheight  ));
 #ifdef INSTRUMENT
-                std::cout << "merge from " << sub1->text() << sub2->text();
+                std::cout << "above merge from\n" << sub1->text() << sub2->text();
+                std::cout << sub1->size() <<" "<< sub2->size() <<" "<< ma << "\n";
 #endif // INSTRUMENT
 
                 e.add( merge );
@@ -923,13 +992,15 @@ void Pack( cPackEngine& e )
             PackSortedItems( e );
 
             // check for an improvement
-            if( BinCount( e ) < bestBinCount ) {
+            if( BinCount( e ) < bestBinCount )
+            {
                 improved = true;
                 break;
             }
         }
 
-        if( ! improved ) {
+        if( ! improved )
+        {
 
             // no improvement, so redo the original pack
             e.items() = sortedItems;
@@ -1129,17 +1200,14 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
         return false;
     });
 
-//#ifdef INSTRUMENT
-//    for( auto bin : e.bins() )
-//    {
-//        std::cout << "sorted bin ";
-//        if( bin->parent() )
-//            std::cout << bin->parent()->userID();
-//        std::cout <<" "<<bin->text()
-//                  << " packed "<<bin->isPacked()
-//                  << "\n";
-//    }
-//#endif // INSTRUMENT
+#ifdef INSTRUMENT
+    for( auto bin : e.bins() )
+    {
+        if( ! bin->isPacked() )
+            std::cout << "sorted space ";
+        std::cout <<" "<<bin->text();
+    }
+#endif // INSTRUMENT
 
 }
 int BinCount( cPackEngine& e)
