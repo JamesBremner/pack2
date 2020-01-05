@@ -2,7 +2,7 @@
 
 #include "pack2.h"
 
-#define INSTRUMENT 1
+//#define INSTRUMENT 1
 
 using namespace std;
 
@@ -61,8 +61,8 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     cout << "Adding item " << item->progID() << " to bin " << bin->progID() << "\n";
 #endif // INSTRUMENT
 
-    if( CheckForOverlap( e, bin ) )
-        throw std::runtime_error("Adding an overlapped item");
+//    if( CheckForOverlap( e, bin ) )
+//        throw std::runtime_error("Adding an overlapped item");
 
     // if adding first item to root bin
     // and there is an endless supply available
@@ -145,13 +145,58 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     //cout << "added4 " << newbin->text();
 //    }
 
+    // shrink bin to hold item exactly
+    if( bin->isSub() )
+    {
+        bin->sizX( item->sizX() );
+        bin->sizY( item->sizY() );
+    }
+
     MergePairs( e, bin );
 
-    MergeTriple( e, bin );
+    //MergeTriple( e, bin );
 
     //MergeUnusedOnRight( e );
 
     //MergeUnusedFromBottomRight( e, bin );
+}
+
+void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
+{
+#ifdef INSTRUMENT
+    cout << "AddAtBottomRight " << item->progID() << " to bin " << parent->progID() << "\n";
+#endif // INSTRUMENT
+
+    // add item to bin contents
+    parent->add( item );
+
+    // locate item relative to parent bin
+    item->locate(
+        parent->right() - item->sizX(),
+        parent->bottom() - item->sizY() );
+
+    bin_t newbin = bin_t( new cBin( "", item->sizX(), item->sizY() ));
+    newbin->locate( item->locX(), item->locY() );
+    newbin->parent( parent );
+    newbin->pack();
+    e.add( newbin );
+    //std::cout << "Added " << newbin->text() << "\n";
+
+    // reduce spaces that are consumed by packing item
+    for( bin_t space : Spaces( e, parent ) )
+    {
+        if( space->isOverlap( *item.get() ))
+        {
+//            std::cout << space->text();
+//            space->sizX(
+//                item->locX() - space->locX() );
+//            space->sizY(
+//                item->locY() - space->locY() );
+//            std::cout << "reduced to " << space->text();
+            space->pack();
+        }
+    }
+
 }
 void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
 {
@@ -1032,6 +1077,11 @@ void PackSortedItems( cPackEngine& e )
 
             // item is waiting to be packed
 
+            int prevCopyCount = 1;
+            bin_t prevBin = e.bins()[0];
+            if( prevBin->isSub() )
+                prevBin = prevBin->parent();
+
             // loop over bins
             for( bin_t bin : e.bins() )
             {
@@ -1039,6 +1089,27 @@ void PackSortedItems( cPackEngine& e )
                     continue;
 
                 // bin is empty
+
+                if( prevCopyCount != bin->copyCount() )
+                {
+                    // the item does not fit in any of the single spaces remaining in prevBin
+
+                    bin_t test( new cBin( bin,
+                                          bin->right() - item->sizX(), bin->bottom() - item->sizY(),
+                                          item->sizX(), item->sizY() ));
+                    if( FitsInMultipleSpaces( e, test, prevBin ) )
+                    {
+                        AddAtBottomRight( e, prevBin, item );
+                        itemPacked = true;
+                        break;
+                    }
+
+                    prevCopyCount = bin->copyCount();
+                    prevBin = bin;
+                    if( prevBin->isSub() )
+                        prevBin = prevBin->parent();
+
+                }
 
                 if( Fits( item, bin ) )
                 {
@@ -1095,6 +1166,48 @@ bool Fits( item_t item, bin_t bin )
         return true;
     item->unspin();
     return false;
+}
+
+bool FitsInMultipleSpaces( cPackEngine& e, bin_t test, bin_t bin )
+{
+#ifdef INSTRUMENT
+    std::cout << "FitsInMultipleSpaces\n";
+    std::cout << "prevBin " << bin->text();
+    std::cout << "test " << test->text();
+#endif // INSTRUMENT
+    for( bin_t pack : e.bins() )
+    {
+        if( pack->origID() != bin->origID() )
+            continue;
+        if( ! pack->isPacked() )
+            continue;
+        if( ! pack->isSub() )
+            continue;
+        if( pack->isOverlap( *test.get() ) )
+        {
+            //std::cout << "Overlapping\n" << pack->text() << test->text();
+            return false;
+        }
+    }
+    return true;
+}
+
+binv_t Spaces( cPackEngine& e, bin_t bin )
+{
+    binv_t v;
+    if( bin->isSub() )
+        return v;
+    for( bin_t space : e.bins() )
+    {
+        if( space->origID() != bin->origID() )
+            continue;
+        if( ! space->isSub() )
+            continue;
+        if( space->isPacked() )
+            continue;
+        v.push_back( space );
+    }
+    return v;
 }
 
 void RemoveUnusedBins( cPackEngine& e )
@@ -1204,8 +1317,10 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
     for( auto bin : e.bins() )
     {
         if( ! bin->isPacked() )
+        {
             std::cout << "sorted space ";
-        std::cout <<" "<<bin->text();
+            std::cout <<" "<<bin->text();
+        }
     }
 #endif // INSTRUMENT
 

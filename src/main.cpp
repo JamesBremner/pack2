@@ -9,6 +9,21 @@ using namespace std;
 
 #include "pack2.h"
 
+TEST( overlap )
+{
+    pack2::cShape s1( "1",800,750);
+    s1.locate( 1600,0 );
+    pack2::cShape s2( "2", 1100, 300 );
+    s2.locate( 1300, 700 );
+    CHECK( s1.isOverlap( s2 ) );
+    pack2::cShape o = s1.overlap( s2 );
+    CHECK_EQUAL( 1600, o.locX());
+    CHECK_EQUAL( 700, o.locY());
+    CHECK_EQUAL( 800, o.sizX() );
+    CHECK_EQUAL( 1300, o.sizY() );
+
+}
+
 TEST( tid11 )
 {
     pack2::cPackEngine thePackEngine;

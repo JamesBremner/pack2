@@ -14,6 +14,7 @@ typedef std::shared_ptr< cBin > bin_t;
 class cItem;
 typedef std::shared_ptr< cItem > item_t;
 typedef std::vector<item_t> itemv_t;
+typedef std::vector<bin_t> binv_t;
 }
 
 #include "cCut.h"
@@ -41,6 +42,11 @@ public:
     {
         myLocX = left;
         myLocY = top;
+    }
+    cShape()
+    : cShape("",0,0)
+    {
+
     }
     virtual int sizX() const
     {
@@ -146,10 +152,19 @@ public:
     {
         return myX * myY;
     }
-    bool isOverlap( const cShape& other )
+    bool isOverlap( const cShape& other ) const
     {
         return ( myLocX <= other.right() && other.locX() <= right()
                 && myLocY <= other.bottom() && other.locY() <= bottom() );
+    }
+    cShape overlap( const cShape& other ) const
+    {
+        cShape s;
+        s.myLocX = std::max( myLocX, other.myLocX );
+        s.myLocY = std::max( myLocY, other.myLocY );
+        s.myX    = std::min( right(), other.right()) - s.myLocX;
+        s.myY    = std::max( bottom(), other.bottom()) - s.myLocX;
+        return s;
     }
     std::string text() const
     {
@@ -253,6 +268,13 @@ public:
     {
         return ( myParent != NULL );
     }
+    /// Program ID of parent, or self if no parent
+    int origID()
+    {
+        if( ! isSub() )
+            return progID();
+        return myParent->progID();
+    }
     void spinEnable( bool f = true )
     {
         throw std::runtime_error("Bins cannot be rotated");
@@ -278,9 +300,6 @@ private:
     bin_t myParent;
 };
 
-
-/// true if item fits inside bin
-bool Fits( item_t item, bin_t bin );
 
 struct sAlgorithm
 {
@@ -337,10 +356,13 @@ private:
     sAlgorithm myAlgorithm;
 };
 
-
+/// true if item fits inside bin
+bool Fits( item_t item, bin_t bin );
+bool FitsInMultipleSpaces( cPackEngine& e, bin_t test, bin_t bin );
 
 /// pack item into bin
 void Add( cPackEngine& e, bin_t bin, item_t item );
+void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item );
 bool CheckForOverlap( cPackEngine& e, bin_t space );
 
 void MergeUnusedSpace( cPackEngine& e, bin_t mewbin );
@@ -362,6 +384,8 @@ void SortItemsDecreasingSquaredDim( cPackEngine& e );
 /// sort bins into increasing size AND copy count
 void SortBinsIntoIncreasingSize( cPackEngine& e );
 
+/// Vector of spaces in bin
+binv_t Spaces( cPackEngine& e, bin_t bin );
 
 /// Sort and pack items into bins,
 void Pack( cPackEngine& e );
