@@ -374,7 +374,7 @@ private:
 
 /// true if item fits inside bin
 bool Fits( item_t item, bin_t bin );
-bool FitsInMultipleSpaces( cPackEngine& e, bin_t test, bin_t bin );
+bool FitsInMultipleSpaces( cPackEngine& e, item_t item, bin_t bin );
 
 /// pack item into bin
 void Add( cPackEngine& e, bin_t bin, item_t item );

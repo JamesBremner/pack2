@@ -156,6 +156,14 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
         bin->sizX( item->sizX() );
         bin->sizY( item->sizY() );
     }
+    else
+    {
+        bin_t space_for_item( new cBin( bin,
+                                        0, 0,
+                                        item->sizX(), item->sizY() ));
+        space_for_item->pack();
+        e.add(space_for_item);
+    }
 
     MergePairs( e, bin );
 
@@ -168,9 +176,9 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 
 void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
 {
-//#ifdef INSTRUMENT
+#ifdef INSTRUMENT
     cout << "AddAtBottomRight " << item->userID() << " to bin " << parent->progID() << "\n";
-//#endif // INSTRUMENT
+#endif // INSTRUMENT
 
     // add item to bin contents
     parent->add( item );
@@ -185,21 +193,11 @@ void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
     newbin->parent( parent );
     newbin->pack();
     e.add( newbin );
-    std::cout << "Added at br " << newbin->text() << "\n";
+    //std::cout << "Added at br " << newbin->text() << "\n";
 
     // reduce spaces that are consumed by packing item
     for( bin_t space : Spaces( e, parent ) )
     {
-//        if( space->isOverlap( *item.get() ))
-//        {
-////            std::cout << space->text();
-////            space->sizX(
-////                item->locX() - space->locX() );
-////            space->sizY(
-////                item->locY() - space->locY() );
-////            std::cout << "reduced to " << space->text();
-//            space->pack();
-//        }
         space->subtract( *newbin.get() );
     }
 
@@ -1095,9 +1093,9 @@ void PackSortedItems( cPackEngine& e )
                 {
                     // item fits into bin
 
-                    if( ( ! bin->isSub()) && ( ! bin->isUsed() ))
+                    if(  ! ( bin->isSub()|| bin->isUsed() ) )
                     {
-                        // about to add fitrst item to a bin
+                        // about to add first item to a bin
                         // let's see if it might fit in any of the fragmented  bottom right corners of previous bins
                         for( bin_t prevBin : e.bins() )
                         {
@@ -1105,10 +1103,8 @@ void PackSortedItems( cPackEngine& e )
                                 continue;
                             if( prevBin->progID() == bin->progID() )
                                 continue;
-                            bin_t test( new cBin( prevBin,
-                                                  prevBin->right() - item->sizX(), prevBin->bottom() - item->sizY(),
-                                                  item->sizX(), item->sizY() ));
-                            if( FitsInMultipleSpaces( e, test, prevBin ) )
+
+                            if( FitsInMultipleSpaces( e, item, prevBin ) )
                             {
                                 AddAtBottomRight( e, prevBin, item );
                                 itemPacked = true;
@@ -1172,13 +1168,19 @@ bool Fits( item_t item, bin_t bin )
     return false;
 }
 
-bool FitsInMultipleSpaces( cPackEngine& e, bin_t test, bin_t bin )
+bool FitsInMultipleSpaces( cPackEngine& e, item_t item, bin_t bin )
 {
+    bin_t test( new cBin( bin,
+                          bin->right() - item->sizX(), bin->bottom() - item->sizY(),
+                          item->sizX(), item->sizY() ));
 #ifdef INSTRUMENT
     std::cout << "=>FitsInMultipleSpaces\n";
     std::cout << "bin " << bin->text();
+    std::cout << "item " << item->text() << "\n";
     std::cout << "test " << test->text();
 #endif // INSTRUMENT
+
+
     for( bin_t pack : e.bins() )
     {
         if( pack->origID() != bin->origID() )
