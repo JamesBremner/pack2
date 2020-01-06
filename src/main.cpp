@@ -9,19 +9,45 @@ using namespace std;
 
 #include "pack2.h"
 
-TEST( overlap )
+TEST( subtract1 )
 {
     pack2::cShape s1( "1",800,750);
     s1.locate( 1600,0 );
     pack2::cShape s2( "2", 1100, 300 );
     s2.locate( 1300, 700 );
     CHECK( s1.isOverlap( s2 ) );
-    pack2::cShape o = s1.overlap( s2 );
-    CHECK_EQUAL( 1600, o.locX());
-    CHECK_EQUAL( 700, o.locY());
-    CHECK_EQUAL( 800, o.sizX() );
-    CHECK_EQUAL( 1300, o.sizY() );
+    s1.subtract( s2 );
+    CHECK_EQUAL( 1600, s1.locX());
+    CHECK_EQUAL( 0, s1.locY());
+    CHECK_EQUAL( 800, s1.sizX() );
+    CHECK_EQUAL( 700, s1.sizY() );
+}
+TEST( subtract2 )
+{
+    pack2::cShape s1( "1",1600,600);
+    s1.locate( 0,1000 );
+    pack2::cShape s2( "2", 1100, 300 );
+    s2.locate( 1300, 700 );
+    CHECK( s1.isOverlap( s2 ) );
+    s1.subtract( s2 );
+    CHECK_EQUAL( 0, s1.locX());
+    CHECK_EQUAL( 1000, s1.locY());
+    CHECK_EQUAL( 1300, s1.sizX() );
+    CHECK_EQUAL( 600, s1.sizY() );
+}
 
+TEST( subtract3 )
+{
+    pack2::cShape s1( "1",200,200);
+    s1.locate( 1200,600 );
+    pack2::cShape s2( "2", 1100, 300 );
+    s2.locate( 1300, 700 );
+    CHECK( s1.isOverlap( s2 ) );
+    s1.subtract( s2 );
+    CHECK_EQUAL( 1200, s1.locX());
+    CHECK_EQUAL( 600, s1.locY());
+    CHECK_EQUAL( 100, s1.sizX() );
+    CHECK_EQUAL( 100, s1.sizY() );
 }
 
 TEST( tid11 )

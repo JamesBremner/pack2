@@ -157,14 +157,30 @@ public:
         return ( myLocX <= other.right() && other.locX() <= right()
                 && myLocY <= other.bottom() && other.locY() <= bottom() );
     }
-    cShape overlap( const cShape& other ) const
+    /** Subtract overlap with other shape
+        @param[in] other
+        Assumes other is to left and below this
+    */
+    virtual void subtract( const cShape& other )
     {
-        cShape s;
-        s.myLocX = std::max( myLocX, other.myLocX );
-        s.myLocY = std::max( myLocY, other.myLocY );
-        s.myX    = std::min( right(), other.right()) - s.myLocX;
-        s.myY    = std::max( bottom(), other.bottom()) - s.myLocX;
-        return s;
+        if( ! isOverlap( other ))
+        {
+            return;
+        }
+        if( myLocX < other.myLocX && myLocY < other.myLocY ) {
+            myX = other.myLocX - myLocX;
+            myY    = other.myLocY - myLocY;
+        }
+        else if( myLocY < other.myLocY ) {
+            myY    = other.myLocY - myLocY;
+            return;
+        }
+        else if( myLocX < other.myLocX ) {
+            myX = other.myLocX - myLocX;
+            return;
+        }
+        else
+            throw std::runtime_error( "cShape::overlap");
     }
     std::string text() const
     {
