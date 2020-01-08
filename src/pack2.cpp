@@ -1050,14 +1050,11 @@ void Pack( cPackEngine& e )
 
         if( ! improved )
         {
-
             // no improvement, so redo the original pack
             e.items() = sortedItems;
             PackSortedItems( e );
         }
     }
-    cout << "all items successfully packed in "
-         << BinCount( e ) << " bins\n";
 }
 
 void PackSortedItems( cPackEngine& e )
@@ -1170,6 +1167,9 @@ bool Fits( item_t item, bin_t bin )
 
 bool FitsInMultipleSpaces( cPackEngine& e, item_t item, bin_t bin )
 {
+    if( ! e.Algorithm().fMultipleFit )
+        return false;
+
     bin_t test( new cBin( bin,
                           bin->right() - item->sizX(), bin->bottom() - item->sizY(),
                           item->sizX(), item->sizY() ));

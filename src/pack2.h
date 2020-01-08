@@ -320,6 +320,7 @@ private:
 struct sAlgorithm
 {
     bool fTryEveryItemFirst;
+    bool fMultipleFit;
     int MergeOnRightCandMinWidth;
 };
 
@@ -329,6 +330,7 @@ public:
     cPackEngine()
     {
         myAlgorithm.fTryEveryItemFirst = false;
+        myAlgorithm.fMultipleFit = false;
         myAlgorithm.MergeOnRightCandMinWidth = 0;
     }
     bin_t addBin( const std::string& id, int x, int y )
