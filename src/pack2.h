@@ -182,6 +182,14 @@ public:
         else
             throw std::runtime_error( "cShape::overlap");
     }
+    /** Check if other shape is adjacent
+        @param[out] dl distance from my left to other left ( top if adjacent to left )
+        @param[out] dr distance from my right to other right ( bottom if adjacent above )
+        @return 0 if eges do not touch, 1 if other is adjacent above, 2 if other adjacent to left
+    */
+    virtual int isAdjacent( const cShape& other,
+                     int& dl, int& dr ) const;
+
     std::string text() const
     {
         std::stringstream ss;
@@ -390,6 +398,8 @@ void MergeUnusedFromBottomRight( cPackEngine& e,  bin_t bin );
 void MergePairs( cPackEngine& e,  bin_t bin );
 bool MergePair( cPackEngine& e, bin_t space1, bin_t space2 );
 void MergeTriple( cPackEngine& e,  bin_t bin );
+bool MergeAdjacent( cPackEngine& e, bin_t sub1, bin_t sub2 );
+void MergeAdjacentPairs( cPackEngine& e,  bin_t bin );
 
 /// Remove unused and sub bins
 void RemoveUnusedBins( cPackEngine& e );

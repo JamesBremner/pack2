@@ -9,6 +9,43 @@ using namespace std;
 
 #include "pack2.h"
 
+TEST( adjacent )
+{
+    int dl, dr;
+    pack2::cShape s1( 10, 10, 20, 20 );
+    pack2::cShape s2( 10, 100, 20, 20 );
+    CHECK( ! s2.isAdjacent( s1, dl, dr ));
+    CHECK( ! s1.isAdjacent( s2, dl, dr ));
+
+    pack2::cShape s3( 0, 30, 50, 20 );
+    CHECK( ! s1.isAdjacent( s3, dl, dr ));
+    CHECK_EQUAL( 1, s3.isAdjacent( s1, dl, dr ));
+    CHECK_EQUAL( 10, dl );
+    CHECK_EQUAL( -20, dr );
+
+    pack2::cShape s4( 30, 300, 20, 20 );
+    CHECK( ! s4.isAdjacent( s1, dl, dr ));
+    CHECK( ! s1.isAdjacent( s4, dl, dr ));
+
+    pack2::cShape s5( 30, 20, 20, 20 );
+    CHECK( ! s1.isAdjacent( s5, dl, dr ));
+    CHECK_EQUAL( 2, s5.isAdjacent( s1, dl, dr ));
+    CHECK_EQUAL( -10, dl );
+    CHECK_EQUAL( -10, dr );
+
+}
+
+TEST( MergeAdjacent )
+{
+    pack2::cPackEngine E;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+    E.add( b );
+    E.add( pack2::bin_t( new pack2::cBin( b, 0, 30, 50, 20 )));
+    E.add( pack2::bin_t( new pack2::cBin( b, 10, 10, 20, 20 )));
+    pack2::MergeAdjacentPairs( E, b );
+
+}
+
 TEST( subtract1 )
 {
     pack2::cShape s1( "1",800,750);
@@ -63,7 +100,6 @@ TEST( tid11 )
     thePackEngine.addItem( "621_5", 1200,250 );
     Pack( thePackEngine );
 
-    exit(0);
 }
 
 TEST( SortBinsIntoIncreasingSize )

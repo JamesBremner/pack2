@@ -553,6 +553,68 @@ void MergeTriple( cPackEngine& e,  bin_t bin )
 
 }
 
+bool MergeAdjacent( cPackEngine& e, bin_t sub1, bin_t sub2 )
+{
+    int dl, dr;
+    int adj = sub1->isAdjacent( *sub2.get(), dl, dr );
+    switch(  adj )
+    {
+    case 1:
+        if( dl >= 0 && dr <= 0 )
+        {
+            int mw = sub2->sizX();
+            int mh = sub1->sizY() + sub2->sizY();
+            int ma = mw * mh;
+            if( ma > sub1->size() && ma > sub2->size() )
+            {
+
+            }
+        }
+        break;
+    default:
+        break;
+    }
+    return false;
+}
+void MergeAdjacentPairs( cPackEngine& e,  bin_t bin )
+{
+    if( bin->parent() )
+        bin = bin->parent();
+
+    bool fmerged = true;
+    while( fmerged )
+    {
+        fmerged = false;
+        for( auto space1 : e.bins() )
+        {
+            if( ! space1->isSub() )
+                continue;
+            if( space1->isPacked() )
+                continue;
+            if( space1->parent()->progID() != bin->progID() )
+                continue;
+
+            for( auto space2 : e.bins() )
+            {
+                if( ! space2->isSub() )
+                    continue;
+                if( space2->isPacked() )
+                    continue;
+                if( space1->parent()->progID() != space2->parent()->progID() )
+                    continue;
+                if( space1->progID() == space2->progID() )
+                    continue;
+
+                fmerged = MergeAdjacent( e, space1, space2 );
+                if( fmerged )
+                    break;
+            }
+            if( fmerged )
+                break;
+        }
+    }
+}
+
 void MergePairs( cPackEngine& e, bin_t bin )
 {
     if( bin->parent() )
@@ -1302,6 +1364,8 @@ void SortItemsIntoDecreasingAwkward( cPackEngine& e )
 void SortBinsIntoIncreasingSize( cPackEngine& e )
 {
     auto& bins = e.bins();
+    RemoveZeroBins(e);
+
     sort( bins.begin(), bins.end(),
           []( bin_t a, bin_t b )
     {
@@ -1434,6 +1498,59 @@ std::string DrawList( item_t item )
 
     return ss.str();
 }
+
+int cShape::isAdjacent(
+    const cShape& other,
+    int& dl, int& dr ) const
+{
+    int ret = 0;
+    if( myLocY == other.bottom() )
+    {
+        bool fOverlap = false;
+        if( myLocX <= other.myLocX )
+        {
+            if( right() >= other.myLocX )
+            {
+                fOverlap = true;
+            }
+        }
+        else
+        {
+            if( myLocX <= other.right() )
+                fOverlap = true;
+        }
+        if( fOverlap )
+        {
+            // other is adjacent above
+            ret = 1;
+            dl = other.myLocX - myLocX;
+            dr = other.right() - right();
+        }
+    }
+    else if( myLocX == other.right() )
+    {
+        bool fOverlap = false;
+        if( myLocY <= other.myLocY )
+        {
+            if( bottom() >= other.myLocY )
+                fOverlap = true;
+        }
+        else
+        {
+            if( myLocY <= other.bottom() )
+                fOverlap = true;
+        }
+        if( fOverlap )
+        {
+            // other is adjacent on left
+            ret = 2;
+            dl = other.myLocY - myLocY;
+            dr = other.bottom() - bottom();
+        }
+    }
+    return ret;
+}
+
 
 int cShape::myLastProgID = -1;
 
