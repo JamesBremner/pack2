@@ -168,35 +168,35 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 
     //MergeUnusedFromBottomRight( e, bin );
 }
-
-void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
-{
-#ifdef INSTRUMENT
-    cout << "AddAtBottomRight " << item->userID() << " to bin " << parent->progID() << "\n";
-#endif // INSTRUMENT
-
-    // add item to bin contents
-    parent->add( item );
-
-    // locate item relative to parent bin
-    item->locate(
-        parent->right() - item->sizX(),
-        parent->bottom() - item->sizY() );
-
-    bin_t newbin = bin_t( new cBin( "", item->sizX(), item->sizY() ));
-    newbin->locate( item->locX(), item->locY() );
-    newbin->parent( parent );
-    newbin->pack();
-    e.add( newbin );
-    //std::cout << "Added at br " << newbin->text() << "\n";
-
-    // reduce spaces that are consumed by packing item
-    for( bin_t space : Spaces( e, parent ) )
-    {
-        space->subtract( *newbin.get() );
-    }
-    MergeAdjacentPairs( e, parent );
-}
+//
+//void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
+//{
+//#ifdef INSTRUMENT
+//    cout << "AddAtBottomRight " << item->userID() << " to bin " << parent->progID() << "\n";
+//#endif // INSTRUMENT
+//
+//    // add item to bin contents
+//    parent->add( item );
+//
+//    // locate item relative to parent bin
+//    item->locate(
+//        parent->right() - item->sizX(),
+//        parent->bottom() - item->sizY() );
+//
+//    bin_t newbin = bin_t( new cBin( "", item->sizX(), item->sizY() ));
+//    newbin->locate( item->locX(), item->locY() );
+//    newbin->parent( parent );
+//    newbin->pack();
+//    e.add( newbin );
+//    //std::cout << "Added at br " << newbin->text() << "\n";
+//
+//    // reduce spaces that are consumed by packing item
+//    for( bin_t space : Spaces( e, parent ) )
+//    {
+//        space->subtract( *newbin.get() );
+//    }
+//    MergeAdjacentPairs( e, parent );
+//}
 
 void ConsumeSpace( cPackEngine& e, bin_t add )
 {
@@ -404,7 +404,9 @@ public:
     int second;
     bool valid;
     cRange()
-        : valid( false )
+        : first( 0 )
+        , second( 0 )
+        , valid( false )
     {
 
     }
@@ -487,148 +489,148 @@ private:
         return ( a.first <= b.second && b.first <= a.second );
     }
 };
-void MergeTriple( cPackEngine& e,  bin_t bin )
-{
-    if( bin->parent() )
-        bin = bin->parent();
+//void MergeTriple( cPackEngine& e,  bin_t bin )
+//{
+//    if( bin->parent() )
+//        bin = bin->parent();
+//
+//    std::vector< bin_t > vspace;
+//    for( auto space : e.bins() )
+//    {
+//        if( ! space->isSub() )
+//            continue;
+//        if( space->isPacked() )
+//            continue;
+//        if( space->parent()->progID() != bin->progID() )
+//            continue;
+//        vspace.push_back( space );
+//    }
+//    if( (int) vspace.size() < 3 )
+//        return;
+//
+//    bin_t bottom_right;
+//    for( auto space : vspace )
+//    {
+//        if( space->right() == bin->right() && space->bottom() == bin->bottom() )
+//        {
+//            bottom_right = space;
+//            break;
+//        }
+//    }
+//    if( ! bottom_right )
+//        return;
+//
+//    std::cout << "bottom_right " << bottom_right->text();
+//
+//    bin_t right;
+//    for( auto space : vspace )
+//    {
+//        if( space->progID() == bottom_right->progID() )
+//            continue;
+//        if( space->right() == bin->right() && space->bottom() == bottom_right->locY() )
+//        {
+//            right = space;
+//            break;
+//        }
+//    }
+//    bin_t left;
+//    for( auto space : vspace )
+//    {
+//        if( space->progID() == bottom_right->progID() )
+//            continue;
+//        if( space->right() == bottom_right->locX() && space->bottom() == bin->bottom() )
+//        {
+//            left = space;
+//            break;
+//        }
+//    }
+//    bin_t lr;
+//    if( left )
+//        lr = left;
+//    if( right )
+//        lr = right;
+//    if( ! lr )
+//        return;
+//
+//
+//
+//}
 
-    std::vector< bin_t > vspace;
-    for( auto space : e.bins() )
-    {
-        if( ! space->isSub() )
-            continue;
-        if( space->isPacked() )
-            continue;
-        if( space->parent()->progID() != bin->progID() )
-            continue;
-        vspace.push_back( space );
-    }
-    if( (int) vspace.size() < 3 )
-        return;
-
-    bin_t bottom_right;
-    for( auto space : vspace )
-    {
-        if( space->right() == bin->right() && space->bottom() == bin->bottom() )
-        {
-            bottom_right = space;
-            break;
-        }
-    }
-    if( ! bottom_right )
-        return;
-
-    std::cout << "bottom_right " << bottom_right->text();
-
-    bin_t right;
-    for( auto space : vspace )
-    {
-        if( space->progID() == bottom_right->progID() )
-            continue;
-        if( space->right() == bin->right() && space->bottom() == bottom_right->locY() )
-        {
-            right = space;
-            break;
-        }
-    }
-    bin_t left;
-    for( auto space : vspace )
-    {
-        if( space->progID() == bottom_right->progID() )
-            continue;
-        if( space->right() == bottom_right->locX() && space->bottom() == bin->bottom() )
-        {
-            left = space;
-            break;
-        }
-    }
-    bin_t lr;
-    if( left )
-        lr = left;
-    if( right )
-        lr = right;
-    if( ! lr )
-        return;
-
-
-
-}
-
-bool MergeAdjacent( cPackEngine& e, bin_t sub1, bin_t sub2 )
-{
-    int dl, dr;
-    int adj = sub1->isAdjacent( *sub2.get(), dl, dr );
-    switch(  adj )
-    {
-    case 1:
-
-        // sub2 is adjacent above sub1
-        if( dl >= 0 && dr <= 0 )
-        {
-            // width of sub2 enclosed by sub1 width
-            int mw = sub2->sizX();
-            int mh = sub1->sizY() + sub2->sizY();
-            int ma = mw * mh;
-            if( ma > sub1->size() && ma > sub2->size() )
-            {
-                bin_t merge = bin_t( new cBin(
-                                         sub1->parent(),
-                                         sub2->locX(), sub2->locY(),
-                                         mw, mh  ));
-                e.add( merge );
-
-                sub1->sizX( dl );
-
-                bin_t rem1right = bin_t( new cBin(
-                                             sub1->parent(),
-                                             sub2->right(), sub1->locY(),
-                                             -dr, sub1->sizY() ) );
-                e.add( rem1right );
-
-                // nothing left of sub2
-                sub2->sizX( 0 );
-
-#ifdef INSTRUMENT
-                std::cout << "MargeAdjacent to " << merge->text()
-                          << sub1->text() << sub2->text();
-#endif // INSTRUMENT
-
-                RemoveZeroBins(e);
-
-                return true;
-            }
-        }
-        break;
-    default:
-        break;
-    }
-    return false;
-}
-void MergeAdjacentPairs( cPackEngine& e,  bin_t bin )
-{
-    if( bin->parent() )
-        bin = bin->parent();
-
-    bool fmerged = true;
-    while( fmerged )
-    {
-        fmerged = false;
-        for( auto space1 : Spaces( e, bin ) )
-        {
-            for( auto space2 : Spaces( e, bin ) )
-            {
-                if( space2->progID() == space1->progID() )
-                    continue;
-
-                fmerged = MergeAdjacent( e, space1, space2 );
-                if( fmerged )
-                    break;
-            }
-            if( fmerged )
-                break;
-        }
-    }
-}
+//bool MergeAdjacent( cPackEngine& e, bin_t sub1, bin_t sub2 )
+//{
+//    int dl, dr;
+//    int adj = sub1->isAdjacent( *sub2.get(), dl, dr );
+//    switch(  adj )
+//    {
+//    case 1:
+//
+//        // sub2 is adjacent above sub1
+//        if( dl >= 0 && dr <= 0 )
+//        {
+//            // width of sub2 enclosed by sub1 width
+//            int mw = sub2->sizX();
+//            int mh = sub1->sizY() + sub2->sizY();
+//            int ma = mw * mh;
+//            if( ma > sub1->size() && ma > sub2->size() )
+//            {
+//                bin_t merge = bin_t( new cBin(
+//                                         sub1->parent(),
+//                                         sub2->locX(), sub2->locY(),
+//                                         mw, mh  ));
+//                e.add( merge );
+//
+//                sub1->sizX( dl );
+//
+//                bin_t rem1right = bin_t( new cBin(
+//                                             sub1->parent(),
+//                                             sub2->right(), sub1->locY(),
+//                                             -dr, sub1->sizY() ) );
+//                e.add( rem1right );
+//
+//                // nothing left of sub2
+//                sub2->sizX( 0 );
+//
+//#ifdef INSTRUMENT
+//                std::cout << "MargeAdjacent to " << merge->text()
+//                          << sub1->text() << sub2->text();
+//#endif // INSTRUMENT
+//
+//                RemoveZeroBins(e);
+//
+//                return true;
+//            }
+//        }
+//        break;
+//    default:
+//        break;
+//    }
+//    return false;
+//}
+//void MergeAdjacentPairs( cPackEngine& e,  bin_t bin )
+//{
+//    if( bin->parent() )
+//        bin = bin->parent();
+//
+//    bool fmerged = true;
+//    while( fmerged )
+//    {
+//        fmerged = false;
+//        for( auto space1 : Spaces( e, bin ) )
+//        {
+//            for( auto space2 : Spaces( e, bin ) )
+//            {
+//                if( space2->progID() == space1->progID() )
+//                    continue;
+//
+//                fmerged = MergeAdjacent( e, space1, space2 );
+//                if( fmerged )
+//                    break;
+//            }
+//            if( fmerged )
+//                break;
+//        }
+//    }
+//}
 
 void MergePairs( cPackEngine& e, bin_t bin )
 {
@@ -788,169 +790,171 @@ bool MergePair( cPackEngine& e, bin_t sub1, bin_t sub2 )
     return false;
 }
 
-void Merge( cPackEngine& e, bin_t above, bin_t below )
-{
-    std::cout << "Merge " << above->text();
-    std::cout << "And " << below->text();
+//void Merge( cPackEngine& e, bin_t above, bin_t below )
+//{
+//    std::cout << "Merge " << above->text();
+//    std::cout << "And " << below->text();
+//
+//    int mxl, myl, mxs, mys;
+//    int m2xl, m2yl, m2xs, m2ys;
+//    if( above->sizX() >= below->sizX() )
+//    {
+//        // below is narrower
+//        mxl = below->locX();
+//        myl = above->locY();
+//        mxs = below->sizX();
+//        mys = above->sizY() + below->sizY();
+//        m2xl = above->locX();
+//        m2yl = above->locY();
+//        m2xs = above->sizX() - below->sizX();
+//        m2ys = below->locY() - above->locY();
+//    }
+//    else
+//    {
+//        // above is narrower
+//        mxl = above->locX();
+//        myl = above->locY();
+//        mxs = above->sizX();
+//        mys = above->sizY() + below->sizY();
+//    }
+//    bin_t mergebin1 = bin_t( new cBin( "", mxs, mys ));
+//    mergebin1->locate( mxl, myl );
+//    mergebin1->parent( above->parent() );
+//    bin_t mergebin2 = bin_t( new cBin( "", m2xs, m2ys ));
+//    mergebin2->locate( m2xl, m2yl );
+//    mergebin2->parent( above->parent() );
+//    std::cout << " gives " << mergebin1->text();
+//    std::cout << "       " << mergebin2->text();
+//}
 
-    int mxl, myl, mxs, mys;
-    int m2xl, m2yl, m2xs, m2ys;
-    if( above->sizX() >= below->sizX() )
-    {
-        // below is narrower
-        mxl = below->locX();
-        myl = above->locY();
-        mxs = below->sizX();
-        mys = above->sizY() + below->sizY();
-        m2xl = above->locX();
-        m2yl = above->locY();
-        m2xs = above->sizX() - below->sizX();
-        m2ys = below->locY() - above->locY();
-    }
-    else
-    {
-        // above is narrower
-        mxl = above->locX();
-        myl = above->locY();
-        mxs = above->sizX();
-        mys = above->sizY() + below->sizY();
-    }
-    bin_t mergebin1 = bin_t( new cBin( "", mxs, mys ));
-    mergebin1->locate( mxl, myl );
-    mergebin1->parent( above->parent() );
-    bin_t mergebin2 = bin_t( new cBin( "", m2xs, m2ys ));
-    mergebin2->locate( m2xl, m2yl );
-    mergebin2->parent( above->parent() );
-    std::cout << " gives " << mergebin1->text();
-    std::cout << "       " << mergebin2->text();
-}
-static vector< bin_t > UnusedBinsOnRight( cPackEngine& e, bin_t base )
-{
-    vector< bin_t > ret;
+//static vector< bin_t > UnusedBinsOnRight( cPackEngine& e, bin_t base )
+//{
+//    vector< bin_t > ret;
+//
+//    for( auto sub : e.bins() )
+//    {
+//        if( ! sub->isSub() )
+//            continue;
+//        if( sub->parent()->progID() != base->progID() )
+//            continue;
+//        if( sub->isPacked() )
+//            continue;
+//        if( sub->right() != base->right() )
+//            continue;
+//        if(  sub->sizX() < e.Algorithm().MergeOnRightCandMinWidth )
+//            continue;
+//
+//        ret.push_back( sub );
+//
+//#ifdef INSTRUMENT
+//        std::cout << "candidate " << sub->text();
+//#endif
+//    }
+//    return ret;
+//}
+//void MergeUnusedOnRight( cPackEngine& e )
+//{
+//    vector< bin_t > vmerges;
+//    for( auto base : e.bins() )
+//    {
+//        if( base->isSub() )
+//            continue;
+//        if( ! base->isUsed() )
+//            continue;
+//
+//#ifdef INSTRUMENT
+//        std::cout << "Looking for merge on right in " << base->text();
+//#endif // INSTRUMENT
+//
+//        vector< bin_t > vcan = UnusedBinsOnRight( e, base );
+//
+//        // where at least 2 condidates found?
+//        if( vcan.size() < 2 )
+//            continue;
+//
+//        int narrowest, topmost, bottommost, biggest;
+//        bool first = true;
+//        for( auto sub : vcan )
+//        {
+//            if( first )
+//            {
+//                narrowest = sub->sizX();
+//                topmost   = sub->locY();
+//                bottommost= sub->bottom();
+//                biggest   = sub->size();
+//                first = false;
+//            }
+//            else
+//            {
+//                if( sub->sizX() < narrowest )
+//                    narrowest = sub->sizX();
+//                if( sub->locY() < topmost )
+//                    topmost = sub->locY();
+//                if( sub->locY() > bottommost )
+//                    bottommost = sub->bottom();
+//                if( sub->size() > biggest )
+//                    biggest = sub->size();
+//            }
+//
+//        }
+//
+//        ///  check that no breaks among candidates in Y direction
+//        sort( vcan.begin(), vcan.end(),
+//              []( bin_t a, bin_t b )
+//        {
+//            return ( a->locY() < b->locY() );
+//        });
+//        bool fOK = true;
+//        bin_t prev_in_y;
+//        for( auto b : vcan )
+//        {
+//            if( prev_in_y == NULL )
+//            {
+//                prev_in_y = b;
+//                continue;
+//            }
+//            if( prev_in_y->bottom() != b->locY() )
+//            {
+//                //std::cout << "break\n" << prev_in_y->text() << b->text() <<"\n";
+//                fOK = false;
+//                break;
+//            }
+//            prev_in_y = b;
+//        }
+//        if( ! fOK )
+//            continue;
+//
+//        int mxs = narrowest;
+//        int mys = bottommost - topmost;
+//
+//#ifdef INSTRUMENT
+//        std::cout << "narrowest " << narrowest
+//                  << " biggest " << biggest
+//                  << " mxs " << mxs << " mys " << mys << "\n";
+//#endif // INSTRUMENT
+//
+//        if( mxs * mys < biggest )
+//            return;
+//
+//        int mxl = base->right() - narrowest;
+//        for( auto b : vcan )
+//        {
+//            b->sizX( mxl - b->locX() );
+//            std::cout << "modified " << b->text();
+//        }
+//
+//        bin_t mergebin = bin_t( new cBin( "",
+//                                          narrowest,
+//                                          bottommost - topmost ));
+//        mergebin->locate( mxl, topmost );
+//        mergebin->parent( base );
+//        vmerges.push_back( mergebin );
+//        std::cout << "merge1 " << mergebin->text();
+//    }
+//    for( auto mb : vmerges )
+//        e.add( mb );
+//}
 
-    for( auto sub : e.bins() )
-    {
-        if( ! sub->isSub() )
-            continue;
-        if( sub->parent()->progID() != base->progID() )
-            continue;
-        if( sub->isPacked() )
-            continue;
-        if( sub->right() != base->right() )
-            continue;
-        if(  sub->sizX() < e.Algorithm().MergeOnRightCandMinWidth )
-            continue;
-
-        ret.push_back( sub );
-
-#ifdef INSTRUMENT
-        std::cout << "candidate " << sub->text();
-#endif
-    }
-    return ret;
-}
-void MergeUnusedOnRight( cPackEngine& e )
-{
-    vector< bin_t > vmerges;
-    for( auto base : e.bins() )
-    {
-        if( base->isSub() )
-            continue;
-        if( ! base->isUsed() )
-            continue;
-
-#ifdef INSTRUMENT
-        std::cout << "Looking for merge on right in " << base->text();
-#endif // INSTRUMENT
-
-        vector< bin_t > vcan = UnusedBinsOnRight( e, base );
-
-        // where at least 2 condidates found?
-        if( vcan.size() < 2 )
-            continue;
-
-        int narrowest, topmost, bottommost, biggest;
-        bool first = true;
-        for( auto sub : vcan )
-        {
-            if( first )
-            {
-                narrowest = sub->sizX();
-                topmost   = sub->locY();
-                bottommost= sub->bottom();
-                biggest   = sub->size();
-                first = false;
-            }
-            else
-            {
-                if( sub->sizX() < narrowest )
-                    narrowest = sub->sizX();
-                if( sub->locY() < topmost )
-                    topmost = sub->locY();
-                if( sub->locY() > bottommost )
-                    bottommost = sub->bottom();
-                if( sub->size() > biggest )
-                    biggest = sub->size();
-            }
-
-        }
-
-        ///  check that no breaks among candidates in Y direction
-        sort( vcan.begin(), vcan.end(),
-              []( bin_t a, bin_t b )
-        {
-            return ( a->locY() < b->locY() );
-        });
-        bool fOK = true;
-        bin_t prev_in_y;
-        for( auto b : vcan )
-        {
-            if( prev_in_y == NULL )
-            {
-                prev_in_y = b;
-                continue;
-            }
-            if( prev_in_y->bottom() != b->locY() )
-            {
-                //std::cout << "break\n" << prev_in_y->text() << b->text() <<"\n";
-                fOK = false;
-                break;
-            }
-            prev_in_y = b;
-        }
-        if( ! fOK )
-            continue;
-
-        int mxs = narrowest;
-        int mys = bottommost - topmost;
-
-#ifdef INSTRUMENT
-        std::cout << "narrowest " << narrowest
-                  << " biggest " << biggest
-                  << " mxs " << mxs << " mys " << mys << "\n";
-#endif // INSTRUMENT
-
-        if( mxs * mys < biggest )
-            return;
-
-        int mxl = base->right() - narrowest;
-        for( auto b : vcan )
-        {
-            b->sizX( mxl - b->locX() );
-            std::cout << "modified " << b->text();
-        }
-
-        bin_t mergebin = bin_t( new cBin( "",
-                                          narrowest,
-                                          bottommost - topmost ));
-        mergebin->locate( mxl, topmost );
-        mergebin->parent( base );
-        vmerges.push_back( mergebin );
-        std::cout << "merge1 " << mergebin->text();
-    }
-    for( auto mb : vmerges )
-        e.add( mb );
-}
 void MergeUnusedSpace( cPackEngine& e, bin_t newbin )
 {
     int right = newbin->right();
@@ -1137,8 +1141,8 @@ void Pack( cPackEngine& e )
 
     auto stop_time = std::chrono::high_resolution_clock::now();
     std::cout << "Packed in "
-        << std::chrono::duration_cast<std::chrono::microseconds>( stop_time - start_time ).count() / 1000000.0f
-        << " seconds\n";
+              << std::chrono::duration_cast<std::chrono::microseconds>( stop_time - start_time ).count() / 1000000.0f
+              << " seconds\n";
 
 }
 
