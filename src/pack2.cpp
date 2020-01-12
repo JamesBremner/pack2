@@ -1322,8 +1322,6 @@ bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin )
 
 bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
 {
-    const int increment = 200;
-
     if( ( ! bin->isPacked() ) || bin->isSub() )
         return false;
     if( SpacesTotal( e, bin ) < item->size() )
@@ -1354,12 +1352,12 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
         }
 
         // Slide
-        int x = item->locX() - increment;
+        int x = item->locX() - e.Algorithm().FitSliderRez;
         int y = item->locY();
         if( x < 0 )
         {
             x = bin->sizX() - item->sizX();
-            y = item->locY() - increment;
+            y = item->locY() - e.Algorithm().FitSliderRez;;
             if( y < 0 )
                 break;
         }
