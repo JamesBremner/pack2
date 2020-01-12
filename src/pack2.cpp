@@ -1463,6 +1463,7 @@ void SortItemsIntoDecreasingAwkward( cPackEngine& e )
 void SortBinsIntoIncreasingSize( cPackEngine& e )
 {
     auto& bins = e.bins();
+
     RemoveZeroBins(e);
 
     sort( bins.begin(), bins.end(),
