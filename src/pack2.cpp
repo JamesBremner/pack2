@@ -1,4 +1,5 @@
 #include <iostream>
+#include <chrono>
 
 #include "pack2.h"
 
@@ -1080,6 +1081,8 @@ void MergeUnusedSpace( cPackEngine& e, bin_t newbin )
 
 void Pack( cPackEngine& e )
 {
+    auto start_time = std::chrono::high_resolution_clock::now();
+
     /* try packing larger items first
      so the smaller may fit into odd remaining spaces
      Use a a measure of size the sum of squares of the individual width snd length
@@ -1131,6 +1134,12 @@ void Pack( cPackEngine& e )
             PackSortedItems( e );
         }
     }
+
+    auto stop_time = std::chrono::high_resolution_clock::now();
+    std::cout << "Packed in "
+        << std::chrono::duration_cast<std::chrono::microseconds>( stop_time - start_time ).count() / 1000000.0f
+        << " seconds\n";
+
 }
 
 void PackSortedItems( cPackEngine& e )
@@ -1285,9 +1294,9 @@ bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin )
     // check that bin is empty root
     if( bin->isSub() || bin->isUsed() )
         return false;
-//#ifdef INSTRUMENT
+#ifdef INSTRUMENT
     std::cout << "first item in bin " << item->text() << bin->text() << "\n";
-//#endif
+#endif
     bin->add( item );
     bin_t itemholder = bin_t( new cBin( bin,
                                         item->locX(), item->locY(),
@@ -1313,9 +1322,11 @@ bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin )
 
 bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
 {
-    const int increment = 20;
+    const int increment = 200;
 
     if( ( ! bin->isPacked() ) || bin->isSub() )
+        return false;
+    if( SpacesTotal( e, bin ) < item->size() )
         return false;
 
     // locate at bottom right
@@ -1376,6 +1387,16 @@ binv_t Spaces( cPackEngine& e, bin_t bin )
         v.push_back( space );
     }
     return v;
+}
+
+int SpacesTotal( cPackEngine& e, bin_t bin )
+{
+    int tot = 0;
+    for( bin_t space : Spaces( e, bin ) )
+    {
+        tot += space->size();
+    }
+    return tot;
 }
 
 void RemoveUnusedBins( cPackEngine& e )

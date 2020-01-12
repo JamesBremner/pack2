@@ -423,6 +423,7 @@ void SortBinsIntoIncreasingSize( cPackEngine& e );
 
 /// Vector of spaces in bin
 binv_t Spaces( cPackEngine& e, bin_t bin );
+int SpacesTotal( cPackEngine& e, bin_t bin );
 
 /// Sort and pack items into bins,
 void Pack( cPackEngine& e );
