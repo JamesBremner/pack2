@@ -152,10 +152,14 @@ public:
     {
         return myX * myY;
     }
-    bool isOverlap( const cShape& other ) const
+    virtual bool isOverlap( const cShape& other ) const
     {
-        return ( myLocX <= other.right() && other.locX() <= right()
-                && myLocY <= other.bottom() && other.locY() <= bottom() );
+        return ( myLocX < other.right() && other.locX() < right()
+                && myLocY < other.bottom() && other.locY() < bottom() );
+    }
+    bool isOverlap( int x, int y ) const
+    {
+        return ( myLocX <= x && x <= right() && myLocY <= y && y <= bottom() );
     }
     /** Subtract overlap with other shape
         @param[in] other
@@ -190,13 +194,9 @@ public:
     virtual int isAdjacent( const cShape& other,
                      int& dl, int& dr ) const;
 
-    std::string text() const
-    {
-        std::stringstream ss;
-        ss << myUserID <<" "<< myProgID <<" "<< myX <<" x " << myY;
-        if( isPacked() ) ss << " packed";
-        return ss.str();
-    }
+    /// Human readable description
+    std::string text() const;
+
 private:
     std::string myUserID;
     int myX;
@@ -314,6 +314,11 @@ public:
         //std::cout << "copycount " << progID() <<" " << ret << "\n";
         return ret;
     }
+
+    bool isSpace()
+    {
+        return( isSub() && ( ! isPacked() ) );
+    }
     std::string text();
 
 
@@ -338,7 +343,7 @@ public:
     cPackEngine()
     {
         myAlgorithm.fTryEveryItemFirst = false;
-        myAlgorithm.fMultipleFit = false;
+        myAlgorithm.fMultipleFit = true;
         myAlgorithm.MergeOnRightCandMinWidth = 0;
     }
     bin_t addBin( const std::string& id, int x, int y )
@@ -385,6 +390,8 @@ private:
 /// true if item fits inside bin
 bool Fits( item_t item, bin_t bin );
 bool FitsInMultipleSpaces( cPackEngine& e, item_t item, bin_t bin );
+bool FitSlider( cPackEngine& e, item_t item, bin_t bin );
+bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin );
 
 /// pack item into bin
 void Add( cPackEngine& e, bin_t bin, item_t item );
@@ -404,6 +411,8 @@ void MergeAdjacentPairs( cPackEngine& e,  bin_t bin );
 /// Remove unused and sub bins
 void RemoveUnusedBins( cPackEngine& e );
 void RemoveZeroBins( cPackEngine& e );
+
+void ConsumeSpace( cPackEngine& e, bin_t add );
 
 void SortItemsIntoDecreasingSize( cPackEngine& e );
 void SortItemsIntoDecreasingAwkward( cPackEngine& e );

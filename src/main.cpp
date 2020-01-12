@@ -9,6 +9,128 @@ using namespace std;
 
 #include "pack2.h"
 
+TEST( FitSlider )
+{
+    pack2::cPackEngine E;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+    E.add( b );
+    E.add( pack2::bin_t( new pack2::cBin( b, 2000, 1000, 400, 200 )));
+    auto packed_item = pack2::item_t( new pack2::cItem( "packed", 400, 200 ));
+    packed_item->locate( 2000, 1000 );
+    b->contents().push_back( packed_item );
+    b->pack();
+    pack2::item_t item = pack2::item_t( new pack2::cItem( "test", 20, 20 ));
+    CHECK( pack2::FitSlider( E, item, b ) );
+    CHECK_EQUAL( 1980, item->locX() );
+    CHECK_EQUAL( 1180, item->locY() );
+}
+
+TEST( Pack1 )
+{
+    pack2::cPackEngine E;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    b->copyEnable();
+    E.add( b );
+    E.addItem( "Item50by40", 50, 40 );
+    E.addItem( "Item60by20", 60, 20 );
+
+    Pack( E );
+
+//    std::cout << "\nPack1 res1\n";
+//    for( auto i : E.items() )
+//        std::cout << i->text();
+//    for( pack2::bin_t b : E.bins() )
+//        std::cout << b->text();
+//    std::cout << "=====================\n";
+
+    CHECK_EQUAL( 1, E.bins().size() );
+    CHECK( E.items()[0]->isPacked() );
+    CHECK( E.items()[1]->isPacked() );
+    CHECK_EQUAL( 0, E.items()[0]->locX() );
+    CHECK_EQUAL( 0, E.items()[0]->locY() );
+    CHECK_EQUAL( 0, E.items()[1]->locX() );
+    CHECK_EQUAL( 40, E.items()[1]->locY() );
+
+    E.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin2", 100, 100 ));
+    b->copyEnable();
+    E.add( b );
+    E.addItem( "Item90x90", 90, 90 );
+    E.addItem( "Item20x20", 20, 20 );
+    Pack( E );
+
+//    std::cout << "\nPack1 res2\n";
+//    for( auto i : E.items() )
+//        std::cout << i->text();
+//    for( pack2::bin_t b : E.bins() )
+//        std::cout << b->text();
+//    std::cout << "=====================\n";
+
+    CHECK_EQUAL( 2, E.bins().size() );
+    CHECK( E.items()[0]->isPacked() );
+    CHECK( E.items()[1]->isPacked() );
+    CHECK_EQUAL( 0, E.items()[0]->locX() );
+    CHECK_EQUAL( 0, E.items()[0]->locY() );
+    CHECK_EQUAL( 0, E.items()[1]->locX() );
+    CHECK_EQUAL( 0, E.items()[1]->locY() );
+}
+
+TEST( MergeAdjacent )
+{
+    pack2::cPackEngine E;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+    E.add( b );
+    E.add( pack2::bin_t( new pack2::cBin( b, 10, 0, 20, 20 )));
+    E.add( pack2::bin_t( new pack2::cBin( b, 10, 21, 20, 20 )));
+    pack2::MergeAdjacentPairs( E, b );
+    CHECK_EQUAL( 3, (int)E.bins().size() );
+    CHECK_EQUAL( 10, E.bins()[1]->locX() );
+    CHECK_EQUAL( 0, E.bins()[1]->locY() );
+    CHECK_EQUAL( 20, E.bins()[1]->sizX() );
+    CHECK_EQUAL( 20, E.bins()[1]->sizY() );
+    CHECK_EQUAL( 10, E.bins()[2]->locX() );
+    CHECK_EQUAL( 21, E.bins()[2]->locY() );
+    CHECK_EQUAL( 20, E.bins()[2]->sizX() );
+    CHECK_EQUAL( 20, E.bins()[2]->sizY() );
+
+    E.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+    E.add( b );
+    E.add( pack2::bin_t( new pack2::cBin( b, 10, 0, 20, 20 )));
+    E.add( pack2::bin_t( new pack2::cBin( b, 10, 20, 20, 20 )));
+    pack2::MergeAdjacentPairs( E, b );
+//    for( pack2::bin_t b : E.bins() )
+//        std::cout << b->text();
+    CHECK_EQUAL( 2, (int)E.bins().size() );
+    CHECK_EQUAL( 10, E.bins()[1]->locX() );
+    CHECK_EQUAL( 0, E.bins()[1]->locY() );
+    CHECK_EQUAL( 20, E.bins()[1]->sizX() );
+    CHECK_EQUAL( 40, E.bins()[1]->sizY() );
+
+    E.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+    E.add( b );
+    E.add( pack2::bin_t( new pack2::cBin( b, 12, 0, 14, 20 )));
+    E.add( pack2::bin_t( new pack2::cBin( b, 10, 20, 20, 20 )));
+    pack2::MergeAdjacentPairs( E, b );
+//    for( pack2::bin_t b : E.bins() )
+//        std::cout << b->text();
+    CHECK_EQUAL( 4, (int)E.bins().size() );
+    CHECK_EQUAL( 10, E.bins()[1]->locX() );
+    CHECK_EQUAL( 20, E.bins()[1]->locY() );
+    CHECK_EQUAL( 2, E.bins()[1]->sizX() );
+    CHECK_EQUAL( 20, E.bins()[1]->sizY() );
+    CHECK_EQUAL( 12, E.bins()[2]->locX() );
+    CHECK_EQUAL( 0, E.bins()[2]->locY() );
+    CHECK_EQUAL( 14, E.bins()[2]->sizX() );
+    CHECK_EQUAL( 40, E.bins()[2]->sizY() );
+    CHECK_EQUAL( 26, E.bins()[3]->locX() );
+    CHECK_EQUAL( 20, E.bins()[3]->locY() );
+    CHECK_EQUAL( 4, E.bins()[3]->sizX() );
+    CHECK_EQUAL( 20, E.bins()[3]->sizY() );
+
+}
+
 TEST( adjacent )
 {
     int dl, dr;
@@ -35,16 +157,7 @@ TEST( adjacent )
 
 }
 
-TEST( MergeAdjacent )
-{
-    pack2::cPackEngine E;
-    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
-    E.add( b );
-    E.add( pack2::bin_t( new pack2::cBin( b, 0, 30, 50, 20 )));
-    E.add( pack2::bin_t( new pack2::cBin( b, 10, 10, 20, 20 )));
-    pack2::MergeAdjacentPairs( E, b );
 
-}
 
 TEST( subtract1 )
 {
@@ -59,19 +172,19 @@ TEST( subtract1 )
     CHECK_EQUAL( 800, s1.sizX() );
     CHECK_EQUAL( 700, s1.sizY() );
 }
-TEST( subtract2 )
-{
-    pack2::cShape s1( "1",1600,600);
-    s1.locate( 0,1000 );
-    pack2::cShape s2( "2", 1100, 300 );
-    s2.locate( 1300, 700 );
-    CHECK( s1.isOverlap( s2 ) );
-    s1.subtract( s2 );
-    CHECK_EQUAL( 0, s1.locX());
-    CHECK_EQUAL( 1000, s1.locY());
-    CHECK_EQUAL( 1300, s1.sizX() );
-    CHECK_EQUAL( 600, s1.sizY() );
-}
+//TEST( subtract2 )
+//{
+//    pack2::cShape s1( "1",1600,600);
+//    s1.locate( 0,1000 );
+//    pack2::cShape s2( "2", 1100, 300 );
+//    s2.locate( 1300, 700 );
+//    CHECK( s1.isOverlap( s2 ) );
+//    s1.subtract( s2 );
+//    CHECK_EQUAL( 0, s1.locX());
+//    CHECK_EQUAL( 1000, s1.locY());
+//    CHECK_EQUAL( 1300, s1.sizX() );
+//    CHECK_EQUAL( 600, s1.sizY() );
+//}
 
 TEST( subtract3 )
 {
@@ -336,123 +449,115 @@ int main()
 
     raven::set::UnitTest::RunAllTests();
 
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    b->copyEnable();
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item50by40", 50, 40 );
-    thePackEngine.addItem( "Item60by20", 60, 20 );
-    Pack( thePackEngine );
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item90by80", 90, 80 );
-    thePackEngine.addItem( "Item80by20", 80, 20 );
-    thePackEngine.addItem( "Item5by100", 5, 100 );
-    Pack( thePackEngine );
-    if( BinCount( thePackEngine ) != 1 )
-    {
-        std::cout << "Failed 7\n";
-        return 1;
-    }
-    cout << CSV( thePackEngine );
-
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    b->copyEnable();
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item1", 10, 10 );
-    thePackEngine.addItem( "Item2", 10, 10 );
-    thePackEngine.addItem( "Item3", 10, 10 );
-    thePackEngine.addItem( "Item4", 10, 10 );
-    Pack( thePackEngine );
-    if( BinCount( thePackEngine ) != 1 )
-    {
-        std::cout << "Failed 1\n";
-        return 1;
-    }
-    cout << CSV( thePackEngine );
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    b->copyEnable();
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item1", 10, 10 );
-    thePackEngine.addItem( "Item2", 100, 100 );
-    Pack( thePackEngine );
-    if( BinCount( thePackEngine ) != 2 )
-    {
-        std::cout << "Failed 2\n";
-        return 1;
-    }
-    cout << CSV( thePackEngine );
-
-    int p = 0;
-    for( pack2::bin_t b : thePackEngine.bins() )
-    {
-        p++;
-        switch( p )
-        {
-        case 1:
-            if( b->contents().size() != 1 )
-            {
-                std::cout << "Failed 3\n";
-                return false;
-            }
-            if( b->contents()[0]->userID() != "Item2" )
-            {
-                std::cout << "Failed 4\n";
-                return false;
-            }
-            break;
-        case 2:
-            if( b->contents().size() != 1 )
-            {
-                std::cout << "Failed 5\n";
-                return false;
-            }
-            if( b->contents()[0]->userID() != "Item1" )
-            {
-                std::cout << "Failed 4\n";
-                return false;
-            }
-            break;
-        }
-    }
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item1", 100, 10 );
-    thePackEngine.addItem( "Item2", 100, 10 );
-    Pack( thePackEngine );
-    cout << CSV( thePackEngine );
-    if( BinCount( thePackEngine ) != 0 )
-    {
-        std::cout << "Failed 5\n";
-        return false;
-    }
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
-    thePackEngine.add( b );
-    auto item = pack2::item_t( new pack2::cItem( "Item1", 100, 10));
-    item->spinEnable();
-    thePackEngine.add( item );
-    item = pack2::item_t( new pack2::cItem( "Item2", 100, 10));
-    item->spinEnable();
-    thePackEngine.add( item );
-    Pack( thePackEngine );
-    cout << CSV( thePackEngine );
-    if( BinCount( thePackEngine ) != 1 )
-    {
-        std::cout << "Failed 6\n";
-        return false;
-    }
-
-    cout << "Tests passed\n";
+//
+//    thePackEngine.clear();
+//    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+//    thePackEngine.add( b );
+//    thePackEngine.addItem( "Item90by80", 90, 80 );
+//    thePackEngine.addItem( "Item80by20", 80, 20 );
+//    thePackEngine.addItem( "Item5by100", 5, 100 );
+//    Pack( thePackEngine );
+//    if( BinCount( thePackEngine ) != 1 )
+//    {
+//        std::cout << "Failed 7\n";
+//        return 1;
+//    }
+//    cout << CSV( thePackEngine );
+//
+//
+//    thePackEngine.clear();
+//    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+//    b->copyEnable();
+//    thePackEngine.add( b );
+//    thePackEngine.addItem( "Item1", 10, 10 );
+//    thePackEngine.addItem( "Item2", 10, 10 );
+//    thePackEngine.addItem( "Item3", 10, 10 );
+//    thePackEngine.addItem( "Item4", 10, 10 );
+//    Pack( thePackEngine );
+//    if( BinCount( thePackEngine ) != 1 )
+//    {
+//        std::cout << "Failed 1\n";
+//        return 1;
+//    }
+//    cout << CSV( thePackEngine );
+//
+//    thePackEngine.clear();
+//    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+//    b->copyEnable();
+//    thePackEngine.add( b );
+//    thePackEngine.addItem( "Item1", 10, 10 );
+//    thePackEngine.addItem( "Item2", 100, 100 );
+//    Pack( thePackEngine );
+//    if( BinCount( thePackEngine ) != 2 )
+//    {
+//        std::cout << "Failed 2\n";
+//        return 1;
+//    }
+//    cout << CSV( thePackEngine );
+//
+//    int p = 0;
+//    for( pack2::bin_t b : thePackEngine.bins() )
+//    {
+//        p++;
+//        switch( p )
+//        {
+//        case 1:
+//            if( b->contents().size() != 1 )
+//            {
+//                std::cout << "Failed 3\n";
+//                return false;
+//            }
+//            if( b->contents()[0]->userID() != "Item2" )
+//            {
+//                std::cout << "Failed 4\n";
+//                return false;
+//            }
+//            break;
+//        case 2:
+//            if( b->contents().size() != 1 )
+//            {
+//                std::cout << "Failed 5\n";
+//                return false;
+//            }
+//            if( b->contents()[0]->userID() != "Item1" )
+//            {
+//                std::cout << "Failed 4\n";
+//                return false;
+//            }
+//            break;
+//        }
+//    }
+//
+//    thePackEngine.clear();
+//    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
+//    thePackEngine.add( b );
+//    thePackEngine.addItem( "Item1", 100, 10 );
+//    thePackEngine.addItem( "Item2", 100, 10 );
+//    Pack( thePackEngine );
+//    cout << CSV( thePackEngine );
+//    if( BinCount( thePackEngine ) != 0 )
+//    {
+//        std::cout << "Failed 5\n";
+//        return false;
+//    }
+//
+//    thePackEngine.clear();
+//    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
+//    thePackEngine.add( b );
+//    auto item = pack2::item_t( new pack2::cItem( "Item1", 100, 10));
+//    item->spinEnable();
+//    thePackEngine.add( item );
+//    item = pack2::item_t( new pack2::cItem( "Item2", 100, 10));
+//    item->spinEnable();
+//    thePackEngine.add( item );
+//    Pack( thePackEngine );
+//    cout << CSV( thePackEngine );
+//    if( BinCount( thePackEngine ) != 1 )
+//    {
+//        std::cout << "Failed 6\n";
+//        return false;
+//    }
+//
+//    cout << "Tests passed\n";
     return 0;
 }

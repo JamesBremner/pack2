@@ -63,29 +63,19 @@ bool CheckForOverlap( cPackEngine& e, bin_t newpack )
 void Add( cPackEngine& e, bin_t bin, item_t item )
 {
 #ifdef INSTRUMENT
-    cout << "Adding item " << item->text() << " to bin " << bin->progID() << "\n";
+    cout << "Adding item " << item->text() << " to bin " << bin->text() << "\n";
 #endif // INSTRUMENT
 
     if( CheckForOverlap( e, bin ) )
         throw std::runtime_error("Add Adding an overlapped item");
-
-    // if adding first item to root bin
-    // and there is an endless supply available
-    // make a new copy ready for next time
-    if( ! bin->isSub() )
-    {
-        if( bin->canCopy() )
-        {
-            cBin* copy = new cBin( bin );
-            e.add( bin_t( copy ));
-        }
-    }
 
     // add item to bin contents
     bin->add( item );
 
     // locate item relative to parent bin
     item->locate( bin->locX(), bin->locY() );
+
+    item->pack();
 
     // dimension of remaining space to right of inserted item
     int xs1 = bin->sizX() - item->sizX();
@@ -150,20 +140,24 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     //cout << "added4 " << newbin->text();
 //    }
 
-    // shrink bin to hold item exactly
+
     if( bin->isSub() )
     {
+        // shrink space to hold item exactly
         bin->sizX( item->sizX() );
         bin->sizY( item->sizY() );
     }
     else
     {
-        bin_t space_for_item( new cBin( bin,
-                                        0, 0,
-                                        item->sizX(), item->sizY() ));
-        space_for_item->pack();
-        e.add(space_for_item);
+        // construct space for item
+        bin = bin_t ( new cBin( bin,
+                                0, 0,
+                                item->sizX(), item->sizY() ));
+        bin->pack();
+        e.add( bin );
     }
+
+    //ConsumeSpace( e, bin );
 
     MergePairs( e, bin );
 
@@ -200,7 +194,13 @@ void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
     {
         space->subtract( *newbin.get() );
     }
+    MergeAdjacentPairs( e, parent );
+}
 
+void ConsumeSpace( cPackEngine& e, bin_t add )
+{
+    for( bin_t space : Spaces( e, add->parent() ) )
+        space->subtract( *add.get() );
 }
 void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
 {
@@ -560,14 +560,41 @@ bool MergeAdjacent( cPackEngine& e, bin_t sub1, bin_t sub2 )
     switch(  adj )
     {
     case 1:
+
+        // sub2 is adjacent above sub1
         if( dl >= 0 && dr <= 0 )
         {
+            // width of sub2 enclosed by sub1 width
             int mw = sub2->sizX();
             int mh = sub1->sizY() + sub2->sizY();
             int ma = mw * mh;
             if( ma > sub1->size() && ma > sub2->size() )
             {
+                bin_t merge = bin_t( new cBin(
+                                         sub1->parent(),
+                                         sub2->locX(), sub2->locY(),
+                                         mw, mh  ));
+                e.add( merge );
 
+                sub1->sizX( dl );
+
+                bin_t rem1right = bin_t( new cBin(
+                                             sub1->parent(),
+                                             sub2->right(), sub1->locY(),
+                                             -dr, sub1->sizY() ) );
+                e.add( rem1right );
+
+                // nothing left of sub2
+                sub2->sizX( 0 );
+
+#ifdef INSTRUMENT
+                std::cout << "MargeAdjacent to " << merge->text()
+                          << sub1->text() << sub2->text();
+#endif // INSTRUMENT
+
+                RemoveZeroBins(e);
+
+                return true;
             }
         }
         break;
@@ -585,24 +612,11 @@ void MergeAdjacentPairs( cPackEngine& e,  bin_t bin )
     while( fmerged )
     {
         fmerged = false;
-        for( auto space1 : e.bins() )
+        for( auto space1 : Spaces( e, bin ) )
         {
-            if( ! space1->isSub() )
-                continue;
-            if( space1->isPacked() )
-                continue;
-            if( space1->parent()->progID() != bin->progID() )
-                continue;
-
-            for( auto space2 : e.bins() )
+            for( auto space2 : Spaces( e, bin ) )
             {
-                if( ! space2->isSub() )
-                    continue;
-                if( space2->isPacked() )
-                    continue;
-                if( space1->parent()->progID() != space2->parent()->progID() )
-                    continue;
-                if( space1->progID() == space2->progID() )
+                if( space2->progID() == space1->progID() )
                     continue;
 
                 fmerged = MergeAdjacent( e, space1, space2 );
@@ -1143,44 +1157,37 @@ void PackSortedItems( cPackEngine& e )
             // loop over bins
             for( bin_t bin : e.bins() )
             {
-                if( bin->isPacked() )
+                if( bin->isSub() && bin->isPacked() )
                     continue;
 
-                // bin is empty
+#ifdef INSTRUMENT
+                std::cout << "\n \nPackSortedItems try bin " << bin->text();
+#endif
 
                 if( Fits( item, bin ) )
                 {
-                    // item fits into bin
-
-                    if(  ! ( bin->isSub()|| bin->isUsed() ) )
-                    {
-                        // about to add first item to a bin
-                        // let's see if it might fit in any of the fragmented  bottom right corners of previous bins
-                        for( bin_t prevBin : e.bins() )
-                        {
-                            if( prevBin->isSub() )
-                                continue;
-                            if( prevBin->progID() == bin->progID() )
-                                continue;
-
-                            if( FitsInMultipleSpaces( e, item, prevBin ) )
-                            {
-                                AddAtBottomRight( e, prevBin, item );
-                                itemPacked = true;
-                                break;
-                            }
-                        }
-                        if( itemPacked )
-                            break;
-                    }
-
+                    // item fits into space
                     Add( e, bin, item );
                     itemPacked = true;
-
-                    // packing the item invalidates iterators
-                    // so we must restart the loops
-                    break;
                 }
+                else if( FitSlider( e, item, bin ) )
+                {
+                    // fits into multiple spaces
+                    bin_t itemholder = bin_t( new cBin( bin,
+                                                        item->locX(), item->locY(),
+                                                        item->sizX(), item->sizY() ));
+                    Add( e, itemholder, item );
+                    itemPacked = true;
+                }
+                else if( FitFirstItem( e, item, bin) )
+                {
+                    // first item in new bin
+                    itemPacked = true;
+                }
+                // packing the item invalidates iterators
+                // so we must restart the loops
+                if( itemPacked )
+                    break;
             }
             if( itemPacked )
                 break;
@@ -1206,25 +1213,37 @@ void PackSortedItems( cPackEngine& e )
 
 bool Fits( item_t item, bin_t bin )
 {
+    if( ! bin->isSpace() )
+        return false;
+
 #ifdef INSTRUMENT
     std::cout << "Trying to fit item " << item->progID() <<" "<< item->userID()
               <<" " << item->sizX() <<"x"<< item->sizY()
               << " into bin ";
-//    if( bin->parent() )
-//        std::cout << bin->parent()->userID();
     std::cout <<" "<<bin->text();
 #endif // INSTRUMENT
 
+    bool ret = false;
     if ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() )
-        return true;
-    if( item->canSpin() )
+    {
+        ret = true;
+    }
+    else if( item->canSpin() )
+    {
         item->spin();
+        if ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() )
+            ret = true;
+        else
+            item->unspin();
+    }
+#ifdef INSTRUMENT
+    if( ret )
+        std::cout << "item fits in space " << item->text() << bin->text() << "\n";
     else
-        return false;
-    if ( item->sizX() <= bin->sizX() && item->sizY() <= bin->sizY() )
-        return true;
-    item->unspin();
-    return false;
+        std::cout << "no fit\n";
+#endif
+
+    return ret;
 }
 
 bool FitsInMultipleSpaces( cPackEngine& e, item_t item, bin_t bin )
@@ -1259,6 +1278,86 @@ bool FitsInMultipleSpaces( cPackEngine& e, item_t item, bin_t bin )
     }
     //std:: cout << "OK\n";
     return true;
+}
+
+bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin )
+{
+    // check that bin is empty root
+    if( bin->isSub() || bin->isUsed() )
+        return false;
+//#ifdef INSTRUMENT
+    std::cout << "first item in bin " << item->text() << bin->text() << "\n";
+//#endif
+    bin->add( item );
+    bin_t itemholder = bin_t( new cBin( bin,
+                                        item->locX(), item->locY(),
+                                        item->sizX(), item->sizY() ));
+    itemholder->pack();
+    item->pack();
+    e.add( itemholder );
+    e.add( bin_t( new cBin( bin,
+                            item->right(), 0,
+                            bin->sizX()-item->sizX(), item->sizY())));
+    e.add( bin_t( new cBin( bin,
+                            0, item->bottom(),
+                            bin->sizX(), bin->sizY() - item->sizY())));
+    RemoveZeroBins( e );
+
+    // if endless supply available
+    // make a new copy ready for next time
+    if( bin->canCopy() )
+        e.add( bin_t( new cBin( bin ) ));
+
+    return true;
+}
+
+bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
+{
+    const int increment = 20;
+
+    if( ( ! bin->isPacked() ) || bin->isSub() )
+        return false;
+
+    // locate at bottom right
+    item->locX( bin->sizX() - item->sizX() );
+    item->locY( bin->sizY() - item->sizY() );
+
+    while( true )
+    {
+        // overlap with any item packed into bin
+        bool fOverlap = false;
+        for( item_t content : bin->contents() )
+        {
+            if( content->isOverlap( *item.get() ) )
+            {
+                fOverlap = true;
+                break;
+            }
+        }
+        if( ! fOverlap )
+        {
+#ifdef INSTRUMENT
+            std::cout << "FitSlider item " << item->text() << " into "<< bin->text() << "\n";
+#endif // INSTRUMENT
+            return true;
+        }
+
+        // Slide
+        int x = item->locX() - increment;
+        int y = item->locY();
+        if( x < 0 )
+        {
+            x = bin->sizX() - item->sizX();
+            y = item->locY() - increment;
+            if( y < 0 )
+                break;
+        }
+        item->locX( x );
+        item->locY( y );
+    }
+
+    // std::cout << "FitSlider fail\n";
+    return false;
 }
 
 binv_t Spaces( cPackEngine& e, bin_t bin )
@@ -1503,6 +1602,10 @@ int cShape::isAdjacent(
     const cShape& other,
     int& dl, int& dr ) const
 {
+#ifdef INSTRUMENT
+    std::cout << "isAdjacent " << text() << " | " << other.text() << "\n";
+#endif // INSTRUMENT
+
     int ret = 0;
     if( myLocY == other.bottom() )
     {
@@ -1549,6 +1652,17 @@ int cShape::isAdjacent(
         }
     }
     return ret;
+}
+
+std::string cShape::text() const
+{
+    std::stringstream ss;
+    ss << myUserID <<" "<< myProgID <<" "<< myX <<" x " << myY
+       << " at " << myLocX << ", "<< myLocY;
+    if( isPacked() )
+        ss << " packed";
+    ss << "\n";
+    return ss.str();
 }
 
 
