@@ -75,61 +75,61 @@ TEST( Pack1 )
     CHECK_EQUAL( 0, E.items()[1]->locY() );
 }
 
-TEST( MergeAdjacent )
-{
-    pack2::cPackEngine E;
-    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
-    E.add( b );
-    E.add( pack2::bin_t( new pack2::cBin( b, 10, 0, 20, 20 )));
-    E.add( pack2::bin_t( new pack2::cBin( b, 10, 21, 20, 20 )));
-    pack2::MergeAdjacentPairs( E, b );
-    CHECK_EQUAL( 3, (int)E.bins().size() );
-    CHECK_EQUAL( 10, E.bins()[1]->locX() );
-    CHECK_EQUAL( 0, E.bins()[1]->locY() );
-    CHECK_EQUAL( 20, E.bins()[1]->sizX() );
-    CHECK_EQUAL( 20, E.bins()[1]->sizY() );
-    CHECK_EQUAL( 10, E.bins()[2]->locX() );
-    CHECK_EQUAL( 21, E.bins()[2]->locY() );
-    CHECK_EQUAL( 20, E.bins()[2]->sizX() );
-    CHECK_EQUAL( 20, E.bins()[2]->sizY() );
-
-    E.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
-    E.add( b );
-    E.add( pack2::bin_t( new pack2::cBin( b, 10, 0, 20, 20 )));
-    E.add( pack2::bin_t( new pack2::cBin( b, 10, 20, 20, 20 )));
-    pack2::MergeAdjacentPairs( E, b );
-//    for( pack2::bin_t b : E.bins() )
-//        std::cout << b->text();
-    CHECK_EQUAL( 2, (int)E.bins().size() );
-    CHECK_EQUAL( 10, E.bins()[1]->locX() );
-    CHECK_EQUAL( 0, E.bins()[1]->locY() );
-    CHECK_EQUAL( 20, E.bins()[1]->sizX() );
-    CHECK_EQUAL( 40, E.bins()[1]->sizY() );
-
-    E.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
-    E.add( b );
-    E.add( pack2::bin_t( new pack2::cBin( b, 12, 0, 14, 20 )));
-    E.add( pack2::bin_t( new pack2::cBin( b, 10, 20, 20, 20 )));
-    pack2::MergeAdjacentPairs( E, b );
-//    for( pack2::bin_t b : E.bins() )
-//        std::cout << b->text();
-    CHECK_EQUAL( 4, (int)E.bins().size() );
-    CHECK_EQUAL( 10, E.bins()[1]->locX() );
-    CHECK_EQUAL( 20, E.bins()[1]->locY() );
-    CHECK_EQUAL( 2, E.bins()[1]->sizX() );
-    CHECK_EQUAL( 20, E.bins()[1]->sizY() );
-    CHECK_EQUAL( 12, E.bins()[2]->locX() );
-    CHECK_EQUAL( 0, E.bins()[2]->locY() );
-    CHECK_EQUAL( 14, E.bins()[2]->sizX() );
-    CHECK_EQUAL( 40, E.bins()[2]->sizY() );
-    CHECK_EQUAL( 26, E.bins()[3]->locX() );
-    CHECK_EQUAL( 20, E.bins()[3]->locY() );
-    CHECK_EQUAL( 4, E.bins()[3]->sizX() );
-    CHECK_EQUAL( 20, E.bins()[3]->sizY() );
-
-}
+//TEST( MergeAdjacent )
+//{
+//    pack2::cPackEngine E;
+//    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+//    E.add( b );
+//    E.add( pack2::bin_t( new pack2::cBin( b, 10, 0, 20, 20 )));
+//    E.add( pack2::bin_t( new pack2::cBin( b, 10, 21, 20, 20 )));
+//    pack2::MergeAdjacentPairs( E, b );
+//    CHECK_EQUAL( 3, (int)E.bins().size() );
+//    CHECK_EQUAL( 10, E.bins()[1]->locX() );
+//    CHECK_EQUAL( 0, E.bins()[1]->locY() );
+//    CHECK_EQUAL( 20, E.bins()[1]->sizX() );
+//    CHECK_EQUAL( 20, E.bins()[1]->sizY() );
+//    CHECK_EQUAL( 10, E.bins()[2]->locX() );
+//    CHECK_EQUAL( 21, E.bins()[2]->locY() );
+//    CHECK_EQUAL( 20, E.bins()[2]->sizX() );
+//    CHECK_EQUAL( 20, E.bins()[2]->sizY() );
+//
+//    E.clear();
+//    b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+//    E.add( b );
+//    E.add( pack2::bin_t( new pack2::cBin( b, 10, 0, 20, 20 )));
+//    E.add( pack2::bin_t( new pack2::cBin( b, 10, 20, 20, 20 )));
+//    pack2::MergeAdjacentPairs( E, b );
+////    for( pack2::bin_t b : E.bins() )
+////        std::cout << b->text();
+//    CHECK_EQUAL( 2, (int)E.bins().size() );
+//    CHECK_EQUAL( 10, E.bins()[1]->locX() );
+//    CHECK_EQUAL( 0, E.bins()[1]->locY() );
+//    CHECK_EQUAL( 20, E.bins()[1]->sizX() );
+//    CHECK_EQUAL( 40, E.bins()[1]->sizY() );
+//
+//    E.clear();
+//    b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
+//    E.add( b );
+//    E.add( pack2::bin_t( new pack2::cBin( b, 12, 0, 14, 20 )));
+//    E.add( pack2::bin_t( new pack2::cBin( b, 10, 20, 20, 20 )));
+//    pack2::MergeAdjacentPairs( E, b );
+////    for( pack2::bin_t b : E.bins() )
+////        std::cout << b->text();
+//    CHECK_EQUAL( 4, (int)E.bins().size() );
+//    CHECK_EQUAL( 10, E.bins()[1]->locX() );
+//    CHECK_EQUAL( 20, E.bins()[1]->locY() );
+//    CHECK_EQUAL( 2, E.bins()[1]->sizX() );
+//    CHECK_EQUAL( 20, E.bins()[1]->sizY() );
+//    CHECK_EQUAL( 12, E.bins()[2]->locX() );
+//    CHECK_EQUAL( 0, E.bins()[2]->locY() );
+//    CHECK_EQUAL( 14, E.bins()[2]->sizX() );
+//    CHECK_EQUAL( 40, E.bins()[2]->sizY() );
+//    CHECK_EQUAL( 26, E.bins()[3]->locX() );
+//    CHECK_EQUAL( 20, E.bins()[3]->locY() );
+//    CHECK_EQUAL( 4, E.bins()[3]->sizX() );
+//    CHECK_EQUAL( 20, E.bins()[3]->sizY() );
+//
+//}
 
 TEST( adjacent )
 {

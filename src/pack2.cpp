@@ -1186,10 +1186,6 @@ void PackSortedItems( cPackEngine& e )
                 else if( FitSlider( e, item, bin ) )
                 {
                     // fits into multiple spaces
-                    bin_t itemholder = bin_t( new cBin( bin,
-                                                        item->locX(), item->locY(),
-                                                        item->sizX(), item->sizY() ));
-                    Add( e, itemholder, item );
                     itemPacked = true;
                 }
                 else if( FitFirstItem( e, item, bin) )
@@ -1301,9 +1297,10 @@ bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin )
 #ifdef INSTRUMENT
     std::cout << "first item in bin " << item->text() << bin->text() << "\n";
 #endif
+    item->locate(0,0);
     bin->add( item );
     bin_t itemholder = bin_t( new cBin( bin,
-                                        item->locX(), item->locY(),
+                                        0, 0,
                                         item->sizX(), item->sizY() ));
     itemholder->pack();
     item->pack();
@@ -1330,6 +1327,12 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
         return false;
     if( SpacesTotal( e, bin ) < item->size() )
         return false;
+    item_t ul = bin->SpaceUpperLimit();
+    if( ul.use_count() ) {
+        if( item->sizX() > ul->sizX() ||
+           item->sizY() > ul->sizY() )
+            return false;
+    }
 
     // locate at bottom right
     item->locX( bin->sizX() - item->sizX() );
@@ -1352,6 +1355,10 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
 #ifdef INSTRUMENT
             std::cout << "FitSlider item " << item->text() << " into "<< bin->text() << "\n";
 #endif // INSTRUMENT
+            bin_t itemholder = bin_t( new cBin( bin,
+                                                item->locX(), item->locY(),
+                                                item->sizX(), item->sizY() ));
+            Add( e, itemholder, item );
             return true;
         }
 
@@ -1368,6 +1375,8 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
         item->locX( x );
         item->locY( y );
     }
+
+    bin->SpaceUpperLimit( item );
 
     // std::cout << "FitSlider fail\n";
     return false;

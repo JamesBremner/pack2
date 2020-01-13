@@ -44,7 +44,7 @@ public:
         myLocY = top;
     }
     cShape()
-    : cShape("",0,0)
+        : cShape("",0,0)
     {
 
     }
@@ -155,7 +155,7 @@ public:
     virtual bool isOverlap( const cShape& other ) const
     {
         return ( myLocX < other.right() && other.locX() < right()
-                && myLocY < other.bottom() && other.locY() < bottom() );
+                 && myLocY < other.bottom() && other.locY() < bottom() );
     }
     bool isOverlap( int x, int y ) const
     {
@@ -171,15 +171,18 @@ public:
         {
             return;
         }
-        if( myLocX < other.myLocX && myLocY < other.myLocY ) {
+        if( myLocX < other.myLocX && myLocY < other.myLocY )
+        {
             myX = other.myLocX - myLocX;
             myY    = other.myLocY - myLocY;
         }
-        else if( myLocY < other.myLocY ) {
+        else if( myLocY < other.myLocY )
+        {
             myY    = other.myLocY - myLocY;
             return;
         }
-        else if( myLocX < other.myLocX ) {
+        else if( myLocX < other.myLocX )
+        {
             myX = other.myLocX - myLocX;
             return;
         }
@@ -192,7 +195,7 @@ public:
         @return 0 if eges do not touch, 1 if other is adjacent above, 2 if other adjacent to left
     */
     virtual int isAdjacent( const cShape& other,
-                     int& dl, int& dr ) const;
+                            int& dl, int& dr ) const;
 
     /// Human readable description
     std::string text() const;
@@ -319,14 +322,31 @@ public:
     {
         return( isSub() && ( ! isPacked() ) );
     }
+
+    item_t SpaceUpperLimit()
+    {
+        return mySpaceUpperLimit;
+    }
+    void SpaceUpperLimit( item_t item )
+    {
+        if( ! mySpaceUpperLimit )
+        {
+            mySpaceUpperLimit = item;
+        }
+        else if( item->sizX() < mySpaceUpperLimit->sizX() &&
+                 item->sizY() < item->sizY() )
+            mySpaceUpperLimit = item;
+    }
+
     std::string text();
 
 
 private:
     bool myfCopy;                    ///< true if endless supply available
     int myCopyCount;
-    std::vector< item_t > myContent;
+    std::vector< item_t > myContent;    ///< items packed into this bin
     bin_t myParent;
+    item_t mySpaceUpperLimit;       ///< Items equal or bigger than this cannot fit.
 };
 
 
