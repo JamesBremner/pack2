@@ -1323,13 +1323,19 @@ bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin )
 
 bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
 {
+    // check for root bin containing some items
     if( ( ! bin->isPacked() ) || bin->isSub() )
         return false;
+
+    // check that enough space, if all combined, to fit item
     if( SpacesTotal( e, bin ) < item->size() )
         return false;
+
+    // check for previous item that did not fit
+    // if this item is larger there is no way it will fit
     item_t ul = bin->SpaceUpperLimit();
     if( ul.use_count() ) {
-        if( item->sizX() > ul->sizX() ||
+        if( item->sizX() > ul->sizX() &&
            item->sizY() > ul->sizY() )
             return false;
     }
@@ -1358,7 +1364,11 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
             bin_t itemholder = bin_t( new cBin( bin,
                                                 item->locX(), item->locY(),
                                                 item->sizX(), item->sizY() ));
-            Add( e, itemholder, item );
+            ConsumeSpace( e, itemholder);
+
+            bin->add( item );
+            item->pack();
+
             return true;
         }
 
@@ -1368,7 +1378,7 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
         if( x < 0 )
         {
             x = bin->sizX() - item->sizX();
-            y = item->locY() - e.Algorithm().FitSliderRez;;
+            y = item->locY() - e.Algorithm().FitSliderRez;
             if( y < 0 )
                 break;
         }
@@ -1698,6 +1708,17 @@ std::string cShape::text() const
     return ss.str();
 }
 
+std::string cPackEngine::text()
+{
+    std::stringstream ss;
+    ss << "Items:\n";
+    for( auto i : myItem )
+        ss << i->text();
+    ss << "Bins:\n";
+    for( pack2::bin_t b : myBin )
+        ss << b->text();
+    return ss.str();
+}
 
 int cShape::myLastProgID = -1;
 

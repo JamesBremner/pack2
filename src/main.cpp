@@ -16,11 +16,15 @@ TEST( FitSlider )
     E.add( b );
     E.add( pack2::bin_t( new pack2::cBin( b, 2000, 1000, 400, 200 )));
     auto packed_item = pack2::item_t( new pack2::cItem( "packed", 400, 200 ));
+    E.add( packed_item );
     packed_item->locate( 2000, 1000 );
     b->contents().push_back( packed_item );
     b->pack();
     pack2::item_t item = pack2::item_t( new pack2::cItem( "test", 20, 20 ));
     CHECK( pack2::FitSlider( E, item, b ) );
+
+    std::cout << E.text();
+
     CHECK_EQUAL( 1980, item->locX() );
     CHECK_EQUAL( 1180, item->locY() );
 }

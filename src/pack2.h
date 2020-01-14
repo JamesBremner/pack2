@@ -403,6 +403,8 @@ public:
     {
         return myAlgorithm;
     }
+    std::string text();
+
 private:
     std::vector< item_t > myItem;
     std::vector< bin_t > myBin;
