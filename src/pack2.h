@@ -25,9 +25,9 @@ class cShape
 {
 public:
     cShape( const std::string& id, int x, int y )
-        : myUserID( id )
-        , myX( x )
+        : myX( x )
         , myY( y )
+        , myUserID( id )
         , myfSpun( false )
         , myfCanSpin( false )
         , myProgID( ++myLastProgID )
@@ -148,9 +148,16 @@ public:
     {
         return myfPacked;
     }
+    // Area of shape
     int size() const
     {
         return myX * myY;
+    }
+    // Set dimensions
+    void size( int x, int y )
+    {
+        myX = x;
+        myY = y;
     }
     virtual bool isOverlap( const cShape& other ) const
     {
@@ -159,36 +166,9 @@ public:
     }
     bool isOverlap( int x, int y ) const
     {
-        return ( myLocX <= x && x <= right() && myLocY <= y && y <= bottom() );
+        return ( myLocX < x && x < right() && myLocY < y && y < bottom() );
     }
-    /** Subtract overlap with other shape
-        @param[in] other
-        Assumes other is to left and below this
-    */
-    virtual void subtract( const cShape& other )
-    {
-        if( ! isOverlap( other ))
-        {
-            return;
-        }
-        if( myLocX < other.myLocX && myLocY < other.myLocY )
-        {
-            myX = other.myLocX - myLocX;
-            myY    = other.myLocY - myLocY;
-        }
-        else if( myLocY < other.myLocY )
-        {
-            myY    = other.myLocY - myLocY;
-            return;
-        }
-        else if( myLocX < other.myLocX )
-        {
-            myX = other.myLocX - myLocX;
-            return;
-        }
-        else
-            throw std::runtime_error( "cShape::overlap");
-    }
+
     /** Check if other shape is adjacent
         @param[out] dl distance from my left to other left ( top if adjacent to left )
         @param[out] dr distance from my right to other right ( bottom if adjacent above )
@@ -200,10 +180,11 @@ public:
     /// Human readable description
     std::string text() const;
 
+protected:
+    int myX;                   ///< x dimension ( size )
+    int myY;                    ///< y dimension ( size )
 private:
     std::string myUserID;
-    int myX;
-    int myY;
     bool myfSpun;               // true if item was rotated when packed
     bool myfCanSpin;
     int myProgID;
@@ -235,6 +216,7 @@ public:
         , myfCopy( false )
         , myCopyCount( 1 )
         , myParent( NULL )
+        , mySpaceRemaining( -1 )
     {
 
     }
@@ -243,6 +225,7 @@ public:
         , myfCopy( false )
         , myCopyCount( 1 )
         , myParent( parent )
+        , mySpaceRemaining( myX * myY )
     {
 
     }
@@ -258,6 +241,7 @@ public:
         else
         {
             myContent.push_back( item );
+            mySpaceRemaining -= item->size();
         }
         pack();
         item->pack();
@@ -322,7 +306,6 @@ public:
     {
         return( isSub() && ( ! isPacked() ) );
     }
-
     item_t SpaceUpperLimit()
     {
         return mySpaceUpperLimit;
@@ -338,6 +321,13 @@ public:
             mySpaceUpperLimit = item;
     }
 
+    int SpaceRemaining()
+    {
+        if( mySpaceRemaining < 0 )
+            mySpaceRemaining = myX * myY;
+        return mySpaceRemaining;
+    }
+
     std::string text();
 
 
@@ -347,6 +337,7 @@ private:
     std::vector< item_t > myContent;    ///< items packed into this bin
     bin_t myParent;
     item_t mySpaceUpperLimit;       ///< Items equal or bigger than this cannot fit.
+    int mySpaceRemaining;
 };
 
 

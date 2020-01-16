@@ -12,6 +12,7 @@ using namespace std;
 TEST( FitSlider )
 {
     pack2::cPackEngine E;
+    //E.Algorithm().FitSliderRez = 100;
     pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 2400,1200 ));
     E.add( b );
     E.add( pack2::bin_t( new pack2::cBin( b, 2000, 1000, 400, 200 )));
@@ -27,7 +28,8 @@ TEST( FitSlider )
 
     CHECK_EQUAL( 1980, item->locX() );
     CHECK_EQUAL( 1180, item->locY() );
-}
+
+  }
 
 TEST( Pack1 )
 {
@@ -159,49 +161,6 @@ TEST( adjacent )
     CHECK_EQUAL( -10, dl );
     CHECK_EQUAL( -10, dr );
 
-}
-
-
-
-TEST( subtract1 )
-{
-    pack2::cShape s1( "1",800,750);
-    s1.locate( 1600,0 );
-    pack2::cShape s2( "2", 1100, 300 );
-    s2.locate( 1300, 700 );
-    CHECK( s1.isOverlap( s2 ) );
-    s1.subtract( s2 );
-    CHECK_EQUAL( 1600, s1.locX());
-    CHECK_EQUAL( 0, s1.locY());
-    CHECK_EQUAL( 800, s1.sizX() );
-    CHECK_EQUAL( 700, s1.sizY() );
-}
-//TEST( subtract2 )
-//{
-//    pack2::cShape s1( "1",1600,600);
-//    s1.locate( 0,1000 );
-//    pack2::cShape s2( "2", 1100, 300 );
-//    s2.locate( 1300, 700 );
-//    CHECK( s1.isOverlap( s2 ) );
-//    s1.subtract( s2 );
-//    CHECK_EQUAL( 0, s1.locX());
-//    CHECK_EQUAL( 1000, s1.locY());
-//    CHECK_EQUAL( 1300, s1.sizX() );
-//    CHECK_EQUAL( 600, s1.sizY() );
-//}
-
-TEST( subtract3 )
-{
-    pack2::cShape s1( "1",200,200);
-    s1.locate( 1200,600 );
-    pack2::cShape s2( "2", 1100, 300 );
-    s2.locate( 1300, 700 );
-    CHECK( s1.isOverlap( s2 ) );
-    s1.subtract( s2 );
-    CHECK_EQUAL( 1200, s1.locX());
-    CHECK_EQUAL( 600, s1.locY());
-    CHECK_EQUAL( 100, s1.sizX() );
-    CHECK_EQUAL( 100, s1.sizY() );
 }
 
 TEST( tid11 )

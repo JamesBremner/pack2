@@ -15,6 +15,7 @@ cBin::cBin( bin_t old )
     , myfCopy( true )
     , myCopyCount( old->myCopyCount+1)
     , myParent( NULL )
+    , mySpaceRemaining( myX * myY )
 {
     std::string sid = userID() ;
     int p = sid.find("_cpy");
@@ -198,11 +199,6 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 //    MergeAdjacentPairs( e, parent );
 //}
 
-void ConsumeSpace( cPackEngine& e, bin_t add )
-{
-    for( bin_t space : Spaces( e, add->parent() ) )
-        space->subtract( *add.get() );
-}
 void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
 {
     if( bin->parent() )
@@ -1167,6 +1163,10 @@ void PackSortedItems( cPackEngine& e )
 
             // item is waiting to be packed
 
+            #ifdef INSTRUMENT
+            std::cout << "\nPackSortedItems packing item " << item->text();
+            #endif // INSTRUMENT
+
             // loop over bins
             for( bin_t bin : e.bins() )
             {
@@ -1174,7 +1174,7 @@ void PackSortedItems( cPackEngine& e )
                     continue;
 
 #ifdef INSTRUMENT
-                std::cout << "\n \nPackSortedItems try bin " << bin->text();
+                std::cout << "\nPackSortedItems try bin " << bin->text();
 #endif
 
                 if( Fits( item, bin ) )
@@ -1204,6 +1204,9 @@ void PackSortedItems( cPackEngine& e )
 
         if( ! unpackedfound )
         {
+            #ifdef INSTRUMENT
+            cout << "no more items to be fitted\n";
+            #endif // INSTRUMENT
             break;
         }
         if( ! itemPacked )
@@ -1328,26 +1331,27 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
         return false;
 
     // check that enough space, if all combined, to fit item
-    if( SpacesTotal( e, bin ) < item->size() )
+    if( bin->SpaceRemaining() < item->size() )
         return false;
 
     // check for previous item that did not fit
     // if this item is larger there is no way it will fit
     item_t ul = bin->SpaceUpperLimit();
-    if( ul.use_count() ) {
+    if( ul.use_count() )
+    {
         if( item->sizX() > ul->sizX() &&
-           item->sizY() > ul->sizY() )
+                item->sizY() > ul->sizY() )
             return false;
     }
 
     // locate at bottom right
     item->locX( bin->sizX() - item->sizX() );
     item->locY( bin->sizY() - item->sizY() );
-
+    bool fOverlap = false;
     while( true )
     {
         // overlap with any item packed into bin
-        bool fOverlap = false;
+        fOverlap = false;
         for( item_t content : bin->contents() )
         {
             if( content->isOverlap( *item.get() ) )
@@ -1357,20 +1361,7 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
             }
         }
         if( ! fOverlap )
-        {
-#ifdef INSTRUMENT
-            std::cout << "FitSlider item " << item->text() << " into "<< bin->text() << "\n";
-#endif // INSTRUMENT
-            bin_t itemholder = bin_t( new cBin( bin,
-                                                item->locX(), item->locY(),
-                                                item->sizX(), item->sizY() ));
-            ConsumeSpace( e, itemholder);
-
-            bin->add( item );
-            item->pack();
-
-            return true;
-        }
+            break;
 
         // Slide
         int x = item->locX() - e.Algorithm().FitSliderRez;
@@ -1386,10 +1377,35 @@ bool FitSlider( cPackEngine& e, item_t item, bin_t bin )
         item->locY( y );
     }
 
-    bin->SpaceUpperLimit( item );
+    if( fOverlap )
+    {
+        // nowhere found in the bin where the item would fit
 
-    // std::cout << "FitSlider fail\n";
-    return false;
+        // no point in checking for any future items that are larger
+        bin->SpaceUpperLimit( item );
+
+        // std::cout << "FitSlider fail\n";
+        return false;
+    }
+
+    // a space large enough for the item has been found.
+
+#ifdef INSTRUMENT
+    std::cout << "FitSlider item " << item->text() << " into "<< bin->text() << "\n";
+#endif // INSTRUMENT
+
+    // add the item
+    bin_t itemholder = bin_t( new cBin( bin,
+                                        item->locX(), item->locY(),
+                                        item->sizX(), item->sizY() ));
+    bin->add( item );
+    item->pack();
+
+    // invalidate remaining spaces
+    for( bin_t space : Spaces( e, bin ) )
+        space->sizX( 0 );
+
+    return true;
 }
 
 binv_t Spaces( cPackEngine& e, bin_t bin )
@@ -1508,9 +1524,15 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
 
     RemoveZeroBins(e);
 
+    std::cout << "\nSortBinsIntoIncreasingSize\n";
+    for( bin_t b : e.bins() )
+        std::cout << b->text();
+
     sort( bins.begin(), bins.end(),
           []( bin_t a, bin_t b )
     {
+        std::cout << "Compare " << a->text() << "with " << b->text();
+
         // always sort spaces first from lower copy counts
         int ac = a->copyCount();
         int bc = b->copyCount();
@@ -1518,7 +1540,7 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
         {
             return ac < bc;
         }
-        // sort speces first that have a smaller area
+        // sort spaces first that have a smaller area
         if( a->size() <= b->size() )
         {
             return true;
@@ -1529,11 +1551,12 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
 #ifdef INSTRUMENT
     for( auto bin : e.bins() )
     {
-        if( ! bin->isPacked() )
-        {
-            std::cout << "sorted space ";
-            std::cout <<" "<<bin->text();
-        }
+        if( bin->isSub() && bin->isPacked() )
+            continue;
+
+        std::cout << "sorted space ";
+        std::cout <<" "<<bin->text();
+
     }
 #endif // INSTRUMENT
 
