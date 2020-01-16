@@ -316,11 +316,12 @@ private:
     bin_t myParent;
 };
 
-
+/// Algorithm configuration
 struct sAlgorithm
 {
     bool fTryEveryItemFirst;
     bool fMultipleFit;
+    bool fThruCuts;
     int MergeOnRightCandMinWidth;
 };
 
@@ -331,6 +332,7 @@ public:
     {
         myAlgorithm.fTryEveryItemFirst = false;
         myAlgorithm.fMultipleFit = false;
+        myAlgorithm.fThruCuts = false;
         myAlgorithm.MergeOnRightCandMinWidth = 0;
     }
     bin_t addBin( const std::string& id, int x, int y )

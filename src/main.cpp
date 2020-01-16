@@ -9,6 +9,42 @@ using namespace std;
 
 #include "pack2.h"
 
+TEST( StrightThru )
+{
+    pack2::cPackEngine E;
+    E.Algorithm().fThruCuts = true;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    b->copyEnable();
+    E.add( b );
+    E.addItem( "Item50by40", 50, 40 );
+    Pack( E );
+    CHECK_EQUAL( 1, BinCount( E ));
+
+
+}
+TEST( pack1 )
+{
+    pack2::cPackEngine E;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin2", 100, 100 ));
+    b->copyEnable();
+    E.add( b );
+    E.addItem( "Item50by40", 50, 40 );
+    E.addItem( "Item60by20", 60, 20 );
+    Pack( E );
+    CHECK_EQUAL( 1, BinCount( E ));
+
+    E.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin3", 100, 100 ));
+    E.add( b );
+    E.addItem( "Item90by80", 90, 80 );
+    E.addItem( "Item80by20", 80, 20 );
+    E.addItem( "Item5by100", 5, 100 );
+    Pack( E );
+    CHECK_EQUAL( 1, BinCount( E ));
+
+    exit( 0 );
+}
+
 TEST( subtract1 )
 {
     pack2::cShape s1( "1",800,750);
@@ -63,7 +99,6 @@ TEST( tid11 )
     thePackEngine.addItem( "621_5", 1200,250 );
     Pack( thePackEngine );
 
-    exit(0);
 }
 
 TEST( SortBinsIntoIncreasingSize )
@@ -299,29 +334,6 @@ int main()
     pack2::bin_t b;
 
     raven::set::UnitTest::RunAllTests();
-
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    b->copyEnable();
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item50by40", 50, 40 );
-    thePackEngine.addItem( "Item60by20", 60, 20 );
-    Pack( thePackEngine );
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item90by80", 90, 80 );
-    thePackEngine.addItem( "Item80by20", 80, 20 );
-    thePackEngine.addItem( "Item5by100", 5, 100 );
-    Pack( thePackEngine );
-    if( BinCount( thePackEngine ) != 1 )
-    {
-        std::cout << "Failed 7\n";
-        return 1;
-    }
-    cout << CSV( thePackEngine );
 
 
     thePackEngine.clear();
