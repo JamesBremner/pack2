@@ -79,17 +79,31 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 
     item->pack();
 
-    // dimension of remaining space to right of inserted item
-    int xs1 = bin->sizX() - item->sizX();
-    int ys1 =  item->sizY();
-    int max12 = xs1 * ys1;
+    CreateRemainingSpaces( e, bin, item );
 
-    // dimension of remaining space below and to right of inserted item
-    int xs2 = bin->sizX();
-    int ys2 = bin->sizY() - item->sizY();
-    if( xs2 * ys2 > max12 )
-        max12 = xs2 * ys2;
+    if( bin->isSub() )
+    {
+        // shrink space to hold item exactly
+        bin->sizX( item->sizX() );
+        bin->sizY( item->sizY() );
+    }
+    else
+    {
+        // construct space for item
+        bin = bin_t ( new cBin( bin,
+                                0, 0,
+                                item->sizX(), item->sizY() ));
+        bin->pack();
+        e.add( bin );
+    }
 
+    if( ! e.Algorithm().fThruCuts )
+        MergePairs( e, bin );
+
+}
+
+void CreateRemainingSpaces( cPackEngine& e, bin_t bin, item_t item )
+{
     // dimension of remaining space to right and below inserted item
     int xs3 = bin->sizX() - item->sizX();
     int ys3 = bin->sizY();
@@ -98,10 +112,45 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
     int xs4 = item->sizX();
     int ys4 = bin->sizY() - item->sizY();
 
-    int max34 = xs3 * ys3;
-    if( xs4 * ys4 > max34 )
-        max34 = xs4 * ys4;
+    bin_t parent;
+    if( bin->isSub() )
+        parent = bin->parent();
+    else
+        parent = bin;
 
+    bin_t newbin = bin_t( new cBin( "", xs3, ys3 ));
+    newbin->locate( bin->locX() + item->sizX(), bin->locY() );
+    newbin->parent( parent );
+    e.add( newbin );
+
+    newbin = bin_t( new cBin( "", xs4, ys4 ));
+    newbin->locate( bin->locX(), bin->locY() + item->sizY() );
+    newbin->parent( parent );
+    e.add( newbin );
+
+    //    // dimension of remaining space to right of inserted item
+//    int xs1 = bin->sizX() - item->sizX();
+//    int ys1 =  item->sizY();
+//    int max12 = xs1 * ys1;
+//
+//    // dimension of remaining space below and to right of inserted item
+//    int xs2 = bin->sizX();
+//    int ys2 = bin->sizY() - item->sizY();
+//    if( xs2 * ys2 > max12 )
+//        max12 = xs2 * ys2;
+//
+//    // dimension of remaining space to right and below inserted item
+//    int xs3 = bin->sizX() - item->sizX();
+//    int ys3 = bin->sizY();
+//
+//    // dimension of remaining space below inserted item
+//    int xs4 = item->sizX();
+//    int ys4 = bin->sizY() - item->sizY();
+//
+//    int max34 = xs3 * ys3;
+//    if( xs4 * ys4 > max34 )
+//        max34 = xs4 * ys4;
+//
 //    if( max12 >= max34 )
 //    {
 //        bin_t newbin = bin_t( new cBin( "", xs1, ys1 ));
@@ -124,74 +173,7 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
 //    }
 //    else
 //    {
-    bin_t newbin = bin_t( new cBin( "", xs3, ys3 ));
-    newbin->locate( bin->locX() + item->sizX(), bin->locY() );
-    if( bin->isSub() )
-        newbin->parent( bin->parent() );
-    else
-        newbin->parent( bin );
-    e.add( newbin );
-    //cout << "added3 " << newbin->text();
-    newbin = bin_t( new cBin( "", xs4, ys4 ));
-    newbin->locate( bin->locX(), bin->locY() + item->sizY() );
-    if( bin->isSub() )
-        newbin->parent( bin->parent() );
-    else
-        newbin->parent( bin );
-    e.add( newbin );
-    //cout << "added4 " << newbin->text();
-//    }
-
-
-    if( bin->isSub() )
-    {
-        // shrink space to hold item exactly
-        bin->sizX( item->sizX() );
-        bin->sizY( item->sizY() );
-    }
-    else
-    {
-        // construct space for item
-        bin = bin_t ( new cBin( bin,
-                                0, 0,
-                                item->sizX(), item->sizY() ));
-        bin->pack();
-        e.add( bin );
-    }
-
-    if( ! e.Algorithm().fThruCuts )
-        MergePairs( e, bin );
-
 }
-//
-//void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
-//{
-//#ifdef INSTRUMENT
-//    cout << "AddAtBottomRight " << item->userID() << " to bin " << parent->progID() << "\n";
-//#endif // INSTRUMENT
-//
-//    // add item to bin contents
-//    parent->add( item );
-//
-//    // locate item relative to parent bin
-//    item->locate(
-//        parent->right() - item->sizX(),
-//        parent->bottom() - item->sizY() );
-//
-//    bin_t newbin = bin_t( new cBin( "", item->sizX(), item->sizY() ));
-//    newbin->locate( item->locX(), item->locY() );
-//    newbin->parent( parent );
-//    newbin->pack();
-//    e.add( newbin );
-//    //std::cout << "Added at br " << newbin->text() << "\n";
-//
-//    // reduce spaces that are consumed by packing item
-//    for( bin_t space : Spaces( e, parent ) )
-//    {
-//        space->subtract( *newbin.get() );
-//    }
-//    MergeAdjacentPairs( e, parent );
-//}
 
 void MergeUnusedFromBottomRight( cPackEngine& e, bin_t bin )
 {
@@ -1157,9 +1139,9 @@ void PackSortedItems( cPackEngine& e )
 
             // item is waiting to be packed
 
-            #ifdef INSTRUMENT
+#ifdef INSTRUMENT
             std::cout << "\nPackSortedItems packing item " << item->text();
-            #endif // INSTRUMENT
+#endif // INSTRUMENT
 
             // loop over bins
             for( bin_t bin : e.bins() )
@@ -1171,7 +1153,7 @@ void PackSortedItems( cPackEngine& e )
                 std::cout << "\nPackSortedItems try bin " << bin->text();
 #endif
 
-                if( Fits( item, bin ) )
+                if( FitsInSpace( item, bin ) )
                 {
                     // item fits into space
                     Add( e, bin, item );
@@ -1198,9 +1180,9 @@ void PackSortedItems( cPackEngine& e )
 
         if( ! unpackedfound )
         {
-            #ifdef INSTRUMENT
+#ifdef INSTRUMENT
             cout << "no more items to be fitted\n";
-            #endif // INSTRUMENT
+#endif // INSTRUMENT
             break;
         }
         if( ! itemPacked )
@@ -1217,10 +1199,15 @@ void PackSortedItems( cPackEngine& e )
 
 
 
-bool Fits( item_t item, bin_t bin )
+bool FitsInSpace( item_t item, bin_t bin )
 {
     if( ! bin->isSpace() )
         return false;
+
+    return Fits( item, bin );
+}
+bool Fits( item_t item, bin_t bin )
+{
 
 #ifdef INSTRUMENT
     std::cout << "Trying to fit item " << item->progID() <<" "<< item->userID()
@@ -1291,6 +1278,11 @@ bool FitFirstItem( cPackEngine& e, item_t item, bin_t bin )
     // check that bin is empty root
     if( bin->isSub() || bin->isUsed() )
         return false;
+    // check that item will fit
+    if( ! Fits( item, bin ) )
+        return false;
+
+
 #ifdef INSTRUMENT
     std::cout << "first item in bin " << item->text() << bin->text() << "\n";
 #endif
@@ -1518,14 +1510,14 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
 
     RemoveZeroBins(e);
 
-    std::cout << "\nSortBinsIntoIncreasingSize\n";
-    for( bin_t b : e.bins() )
-        std::cout << b->text();
+    //std::cout << "\nSortBinsIntoIncreasingSize\n";
+//    for( bin_t b : e.bins() )
+//        std::cout << b->text();
 
     sort( bins.begin(), bins.end(),
           []( bin_t a, bin_t b )
     {
-        std::cout << "Compare " << a->text() << "with " << b->text();
+        //std::cout << "Compare " << a->text() << "with " << b->text();
 
         // always sort spaces first from lower copy counts
         int ac = a->copyCount();
@@ -1712,17 +1704,6 @@ int cShape::isAdjacent(
         }
     }
     return ret;
-}
-
-std::string cShape::text() const
-{
-    std::stringstream ss;
-    ss << myUserID <<" "<< myProgID <<" "<< myX <<" x " << myY
-       << " at " << myLocX << ", "<< myLocY;
-    if( isPacked() )
-        ss << " packed";
-    ss << "\n";
-    return ss.str();
 }
 
 std::string cPackEngine::text()

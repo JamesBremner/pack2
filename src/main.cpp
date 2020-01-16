@@ -9,6 +9,43 @@ using namespace std;
 
 #include "pack2.h"
 
+TEST( spin )
+{
+    pack2::cPackEngine E;
+    auto b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
+    E.add( b );
+    E.addItem( "Item1", 100, 10 );
+    E.addItem( "Item2", 100, 10 );
+    Pack( E );
+    CHECK_EQUAL( 0, BinCount( E ) );
+
+    E.clear();
+    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
+    E.add( b );
+    E.addItem( "Item1", 100, 10 );
+    E.addItem( "Item2", 100, 10 );
+    E.items()[0]->spinEnable();
+    E.items()[1]->spinEnable();
+    Pack( E );
+    CHECK_EQUAL( 1, BinCount( E ) );
+}
+
+TEST( CreateRemainingSpaces )
+{
+    pack2::cPackEngine E;
+    pack2::bin_t b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
+    E.add( b );
+    pack2::item_t item = pack2::item_t( new pack2::cItem("i1",0,0));
+    item->sizX( 5 );
+    item->sizY( 10 );
+
+    CreateRemainingSpaces( E, b, item );
+
+    CHECK( pack2::cShape(5,0,95,100) == *(pack2::cShape*)Spaces(E,b)[0].get() );
+    CHECK( pack2::cShape(0,10,5,90) == *(pack2::cShape*)Spaces(E,b)[1].get() );
+
+}
+
 TEST( StrightThru )
 {
     pack2::cPackEngine E;
@@ -42,7 +79,6 @@ TEST( pack1 )
     Pack( E );
     CHECK_EQUAL( 1, BinCount( E ));
 
-    exit( 0 );
 }
 
 TEST( subtract1 )
@@ -60,7 +96,7 @@ TEST( subtract1 )
     pack2::item_t item = pack2::item_t( new pack2::cItem( "test", 20, 20 ));
     CHECK( pack2::FitSlider( E, item, b ) );
 
-    std::cout << E.text();
+    //std::cout << E.text();
 
     CHECK_EQUAL( 1980, item->locX() );
     CHECK_EQUAL( 1180, item->locY() );
@@ -509,36 +545,6 @@ int main()
             }
             break;
         }
-    }
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
-    thePackEngine.add( b );
-    thePackEngine.addItem( "Item1", 100, 10 );
-    thePackEngine.addItem( "Item2", 100, 10 );
-    Pack( thePackEngine );
-    cout << CSV( thePackEngine );
-    if( BinCount( thePackEngine ) != 0 )
-    {
-        std::cout << "Failed 5\n";
-        return false;
-    }
-
-    thePackEngine.clear();
-    b = pack2::bin_t( new pack2::cBin( "Bin1", 20, 100 ));
-    thePackEngine.add( b );
-    auto item = pack2::item_t( new pack2::cItem( "Item1", 100, 10));
-    item->spinEnable();
-    thePackEngine.add( item );
-    item = pack2::item_t( new pack2::cItem( "Item2", 100, 10));
-    item->spinEnable();
-    thePackEngine.add( item );
-    Pack( thePackEngine );
-    cout << CSV( thePackEngine );
-    if( BinCount( thePackEngine ) != 1 )
-    {
-        std::cout << "Failed 6\n";
-        return false;
     }
 
     cout << "Tests passed\n";
