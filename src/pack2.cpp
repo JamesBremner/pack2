@@ -159,15 +159,9 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
         e.add( bin );
     }
 
-    //ConsumeSpace( e, bin );
+    if( ! e.Algorithm().fThruCuts )
+        MergePairs( e, bin );
 
-    MergePairs( e, bin );
-
-    //MergeTriple( e, bin );
-
-    //MergeUnusedOnRight( e );
-
-    //MergeUnusedFromBottomRight( e, bin );
 }
 //
 //void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )

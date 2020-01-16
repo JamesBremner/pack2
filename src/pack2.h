@@ -340,11 +340,12 @@ private:
     int mySpaceRemaining;
 };
 
-
+/// Algorithm configuration
 struct sAlgorithm
 {
     bool fTryEveryItemFirst;
     bool fMultipleFit;
+    bool fThruCuts;
     int MergeOnRightCandMinWidth;
     int FitSliderRez;
 };
@@ -355,7 +356,8 @@ public:
     cPackEngine()
     {
         myAlgorithm.fTryEveryItemFirst = false;
-        myAlgorithm.fMultipleFit = true;
+        myAlgorithm.fMultipleFit = false;
+        myAlgorithm.fThruCuts = false;
         myAlgorithm.MergeOnRightCandMinWidth = 0;
         myAlgorithm.FitSliderRez = 50;
     }
