@@ -169,6 +169,80 @@ void Add( cPackEngine& e, bin_t bin, item_t item )
         MergePairs( e, bin );
 }
 
+void CreateRemainingSpaces( cPackEngine& e, bin_t bin, item_t item )
+{
+    // dimension of remaining space to right and below inserted item
+    int xs3 = bin->sizX() - item->sizX();
+    int ys3 = bin->sizY();
+
+    // dimension of remaining space below inserted item
+    int xs4 = item->sizX();
+    int ys4 = bin->sizY() - item->sizY();
+
+    bin_t parent;
+    if( bin->isSub() )
+        parent = bin->parent();
+    else
+        parent = bin;
+
+    bin_t newbin = bin_t( new cBin( "", xs3, ys3 ));
+    newbin->locate( bin->locX() + item->sizX(), bin->locY() );
+    newbin->parent( parent );
+    e.add( newbin );
+
+    newbin = bin_t( new cBin( "", xs4, ys4 ));
+    newbin->locate( bin->locX(), bin->locY() + item->sizY() );
+    newbin->parent( parent );
+    e.add( newbin );
+
+    //    // dimension of remaining space to right of inserted item
+//    int xs1 = bin->sizX() - item->sizX();
+//    int ys1 =  item->sizY();
+//    int max12 = xs1 * ys1;
+//
+//    // dimension of remaining space below and to right of inserted item
+//    int xs2 = bin->sizX();
+//    int ys2 = bin->sizY() - item->sizY();
+//    if( xs2 * ys2 > max12 )
+//        max12 = xs2 * ys2;
+//
+//    // dimension of remaining space to right and below inserted item
+//    int xs3 = bin->sizX() - item->sizX();
+//    int ys3 = bin->sizY();
+//
+//    // dimension of remaining space below inserted item
+//    int xs4 = item->sizX();
+//    int ys4 = bin->sizY() - item->sizY();
+//
+//    int max34 = xs3 * ys3;
+//    if( xs4 * ys4 > max34 )
+//        max34 = xs4 * ys4;
+//
+//    if( max12 >= max34 )
+//    {
+//        bin_t newbin = bin_t( new cBin( "", xs1, ys1 ));
+//        newbin->locate( bin->locX() + item->sizX(), bin->locY() );
+//        if( bin->isSub() )
+//            newbin->parent( bin->parent() );
+//        else
+//            newbin->parent( bin );
+//        e.add( newbin );
+//        cout << "added1 " << newbin->text();
+//        //MergeUnusedSpace( e, newbin );
+//        newbin = bin_t( new cBin( "", xs2, ys2 ));
+//        newbin->locate( bin->locX(), bin->locY() + item->sizY() );
+//        if( bin->isSub() )
+//            newbin->parent( bin->parent() );
+//        else
+//            newbin->parent( bin );
+//        e.add( newbin );
+//        cout << "added2 " << newbin->text();
+//    }
+//    else
+//    {
+}
+
+
 void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item )
 {
 #ifdef INSTRUMENT

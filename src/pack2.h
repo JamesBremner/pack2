@@ -182,13 +182,11 @@ public:
         else
             throw std::runtime_error( "cShape::overlap");
     }
-    std::string text() const
-    {
-        std::stringstream ss;
-        ss << myUserID <<" "<< myProgID <<" "<< myX <<" x " << myY;
-        if( isPacked() ) ss << " packed";
-        return ss.str();
-    }
+
+    bool operator==( const cShape& other ) const;
+
+    std::string text() const;
+
 private:
     std::string myUserID;
     int myX;
@@ -384,6 +382,7 @@ bool FitsInMultipleSpaces( cPackEngine& e, item_t item, bin_t bin );
 void Add( cPackEngine& e, bin_t bin, item_t item );
 void AddAtBottomRight( cPackEngine& e, bin_t parent, item_t item );
 bool CheckForOverlap( cPackEngine& e, bin_t space );
+void CreateRemainingSpaces( cPackEngine& e, bin_t bin, item_t item );
 
 void MergeUnusedSpace( cPackEngine& e, bin_t mewbin );
 void MergeUnusedOnRight( cPackEngine& e );
