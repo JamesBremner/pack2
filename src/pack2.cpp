@@ -1370,11 +1370,15 @@ void SortItemsIntoDecreasingAwkward( cPackEngine& e )
 }
 void SortBinsIntoIncreasingSize( cPackEngine& e )
 {
-    auto& bins = e.bins();
     RemoveZeroBins( e );
-    sort( bins.begin(), bins.end(),
-          []( bin_t a, bin_t b )
+
+    sort( e.bins().begin(), e.bins().end(),
+          []( bin_t& a, bin_t& b )
     {
+       if( a->progID() == b->progID() ) {
+            return false;
+        }
+
         // always sort spaces first from lower copy counts
         int ac = a->copyCount();
         int bc = b->copyCount();
@@ -1391,6 +1395,7 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
     });
 
 #ifdef INSTRUMENT
+    std::cout << " <= SortBinsIntoIncreasingSize\n";
     for( auto bin : e.bins() )
     {
         if( ! bin->isPacked() )
