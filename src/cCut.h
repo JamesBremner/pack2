@@ -28,7 +28,8 @@ public:
     static bool CanJoin( cCut& joined, const cCut& cut1, const cCut& cut2 );
 
     /// descriptive string (x0,y0) to (x1,y1)
-    std::string get() const;
+    std::string sget() const;
+    std::vector<int> get() const;
 
     /// identity operator
     bool operator==( const cCut& other ) const;
@@ -67,7 +68,8 @@ public:
 
     /**  Descriptive string
     */
-    std::string get() const;
+    std::string sget() const;
+    std::vector< std::vector<int> > get() const;
 
     void set( bin_t bin ) { myBin = bin; }
 };

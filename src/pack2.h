@@ -421,13 +421,12 @@ std::string CSV( cPackEngine& e );
 /// CSV item ids that could not be fittted
 std::string Unpacked( cPackEngine& e );
 
-std::string CutList( cPackEngine& e );
-
 std::string DrawList( cPackEngine& e );
 std::string DrawList( bin_t bin );
 std::string DrawList( item_t item );
 
-std::string CutList( cPackEngine& e );
+std::string CutListS( cPackEngine& e );
+std::vector< std::vector<int> > CutList( cPackEngine& e );
 }
 
 

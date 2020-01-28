@@ -1375,7 +1375,10 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
     sort( e.bins().begin(), e.bins().end(),
           []( bin_t& a, bin_t& b )
     {
-       if( a->progID() == b->progID() ) {
+        // sometimes sort asks something to be compared with itself
+        // this must be returned false, otherwise a crash occurs https://stackoverflow.com/q/59912157/16582
+        if( a->progID() == b->progID() )
+        {
             return false;
         }
 
@@ -1386,7 +1389,7 @@ void SortBinsIntoIncreasingSize( cPackEngine& e )
         {
             return ac < bc;
         }
-        // sort speces first that have a smaller area
+        // sort spaces first that have a smaller area
         if( a->size() <= b->size() )
         {
             return true;
@@ -1447,7 +1450,7 @@ std::string Unpacked( cPackEngine& e )
     }
     return ss.str();
 }
-std::string CutList( cPackEngine& e )
+std::string CutListS( cPackEngine& e )
 {
     std::stringstream ss;
 
@@ -1455,10 +1458,22 @@ std::string CutList( cPackEngine& e )
     {
         cCutList L;
         CutListBin( b, L );
-        ss << L.get();
+        ss << L.sget();
     }
 
     return ss.str();
+}
+std::vector< std::vector<int> > CutList( cPackEngine& e )
+{
+    std::vector< std::vector<int> > ret;
+    for( bin_t b : e.bins() )
+    {
+        cCutList L;
+        CutListBin( b, L );
+        for( auto& row : L.get() )
+            ret.push_back( row );
+    }
+    return ret;
 }
 std::string DrawList( cPackEngine& e )
 {

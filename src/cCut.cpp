@@ -149,7 +149,7 @@ void cCutList::Join()
         }
     }
 }
-string cCut::get() const
+string cCut::sget() const
 {
     stringstream ss;
     if( myIsVertical )
@@ -164,14 +164,46 @@ string cCut::get() const
     }
     return ss.str();
 }
-string cCutList::get() const
+std::vector<int> cCut::get() const
+{
+    std::vector<int> ret;
+    if( myIsVertical )
+    {
+        ret.push_back( myIntercept);
+        ret.push_back( myStart);
+        ret.push_back( myIntercept);
+        ret.push_back( myStop);
+    }
+    else
+    {
+        ret.push_back( myStart);
+        ret.push_back( myIntercept);
+        ret.push_back( myStop);
+        ret.push_back( myIntercept);
+    }
+    return ret;
+}
+string cCutList::sget() const
 {
     stringstream ss;
     for( auto& c : myCut )
     {
-        ss << myBin->userID() << ","<< c.get() << endl;
+        ss << myBin->userID() << ","<< c.sget() << endl;
     }
     return ss.str();
+}
+std::vector< std::vector<int> > cCutList::get() const
+{
+    std::vector< std::vector<int> > ret;
+    for( auto& c : myCut )
+    {
+        std::vector<int> row;
+        row.push_back( myBin->progID() );
+        for( int v : c.get() )
+            row.push_back( v );
+        ret.push_back( row );
+    }
+    return ret;
 }
 
 void CutListBin( bin_t bin, cCutList& L )
