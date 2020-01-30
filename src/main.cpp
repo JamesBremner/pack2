@@ -9,6 +9,27 @@ using namespace std;
 
 #include "pack2.h"
 
+TEST( CutList )
+{
+    pack2::cPackEngine E;
+    E.add( pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 )) );
+    E.addItem( "Item1", 20, 20 );
+    E.addItem( "Item2", 20, 20 );
+    Pack( E );
+    auto L = pack2::CutList( E );
+//    for( auto& c : L )
+//    {
+//        for( int v : c )
+//            std::cout << v << ", ";
+//        std::cout << "\n";
+//    }
+    CHECK_EQUAL( 3, L.size() );
+    CHECK_EQUAL( 20, L[2][1] );
+    CHECK_EQUAL( 0, L[2][2] );
+    CHECK_EQUAL( 20, L[2][3] );
+    CHECK_EQUAL( 40, L[2][4] );
+}
+
 TEST( spin )
 {
     pack2::cPackEngine E;
@@ -387,7 +408,7 @@ int main()
         std::cout << "Failed 1\n";
         return 1;
     }
-    cout << CSV( thePackEngine );
+    //cout << CSV( thePackEngine );
 
     thePackEngine.clear();
     b = pack2::bin_t( new pack2::cBin( "Bin1", 100, 100 ));
@@ -401,7 +422,7 @@ int main()
         std::cout << "Failed 2\n";
         return 1;
     }
-    cout << CSV( thePackEngine );
+    //cout << CSV( thePackEngine );
 
     int p = 0;
     for( pack2::bin_t b : thePackEngine.bins() )
@@ -436,6 +457,6 @@ int main()
         }
     }
 
-    cout << "Tests passed\n";
+    //cout << "Tests passed\n";
     return 0;
 }

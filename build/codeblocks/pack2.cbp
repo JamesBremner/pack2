@@ -37,6 +37,8 @@
 		</Compiler>
 		<Unit filename="../../../raven-set/cutest.cpp" />
 		<Unit filename="../../src/cCut.cpp" />
+		<Unit filename="../../src/cCut.h" />
+		<Unit filename="../../src/cShape.cpp" />
 		<Unit filename="../../src/main.cpp" />
 		<Unit filename="../../src/pack2.cpp" />
 		<Unit filename="../../src/pack2.h" />
