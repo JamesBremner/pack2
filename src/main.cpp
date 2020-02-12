@@ -40,12 +40,12 @@ TEST( CutListJoin )
     E.addItem( "Item4", 600, 20 );
     Pack( E );
     auto L = pack2::CutList( E );
-        for( auto& c : L )
-    {
-        for( int v : c )
-            std::cout << v << ", ";
-        std::cout << "\n";
-    }
+//        for( auto& c : L )
+//    {
+//        for( int v : c )
+//            std::cout << v << ", ";
+//        std::cout << "\n";
+//    }
     CHECK_EQUAL( 6, L.size() );
 }
 

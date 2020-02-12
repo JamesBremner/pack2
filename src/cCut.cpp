@@ -143,10 +143,10 @@ void cCutList::join()
             for( vector < cCut >::iterator it2 = it1+1;
                     it2 != myCut.end(); it2++ )
             {
-                if( ( ! it1->myIsVertical ) && ( ! it2-> myIsVertical )) {
-                cout << "test join " << it1->sget() << " and "
-                                        << it2->sget() << "\n";
-                }
+//                if( ( ! it1->myIsVertical ) && ( ! it2-> myIsVertical )) {
+//                cout << "test join " << it1->sget() << " and "
+//                                        << it2->sget() << "\n";
+//                }
                 if( cCut::CanJoin( cut, *it1, *it2 ) )
                 {
 
