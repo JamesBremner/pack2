@@ -52,11 +52,11 @@ public:
 
     Ignored if identical cut already present
     */
-    void Add( const cCut& cut );
+    void add( const cCut& cut );
 
     /** Join all possible cuts
     */
-    void Join();
+    void join();
 
     /** Number of cuts in list
     */

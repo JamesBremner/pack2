@@ -1470,7 +1470,7 @@ std::vector< std::vector<int> > CutList( cPackEngine& e )
     {
         cCutList L;
         CutListBin( b, L );
-        L.Join();
+        L.join();
         for( auto& row : L.get() )
             ret.push_back( row );
     }

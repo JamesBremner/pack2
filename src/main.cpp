@@ -30,6 +30,25 @@ TEST( CutList )
     CHECK_EQUAL( 40, L[2][4] );
 }
 
+TEST( CutListJoin )
+{
+    pack2::cPackEngine E;
+    E.add( pack2::bin_t( new pack2::cBin( "CutListJoin", 1000, 1000 )) );
+    E.addItem( "Item1", 500, 200 );
+    E.addItem( "Item2", 500, 200 );
+    E.addItem( "Item3", 200, 20 );
+    E.addItem( "Item4", 600, 20 );
+    Pack( E );
+    auto L = pack2::CutList( E );
+        for( auto& c : L )
+    {
+        for( int v : c )
+            std::cout << v << ", ";
+        std::cout << "\n";
+    }
+    CHECK_EQUAL( 6, L.size() );
+}
+
 TEST( spin )
 {
     pack2::cPackEngine E;

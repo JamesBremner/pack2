@@ -64,19 +64,48 @@ bool cCut::CanJoin( cCut& joined, const cCut& cut1, const cCut& cut2 )
         return true;
     }
     if( cut1.myIsVertical != cut2.myIsVertical )
+    {
+        // horizontal and vertical lines can never be joined
         return false;
-    if( fabs ( cut1.myIntercept - cut2.myIntercept ) > 0.01 )
+    }
+    if( fabs ( cut1.myIntercept - cut2.myIntercept ) > SMALL_DIFF )
         return false;
-    if( fabs( cut1.myStop - cut2.myStart ) < 0.01 )
+    if( fabs( cut1.myStop - cut2.myStart ) < SMALL_DIFF )
+    {
+        // cut2 continues cut1
+        joined = cut1;
+        joined.myStop = cut2.myStop;
+        return true;
+    }
+    if( fabs( cut2.myStop - cut1.myStart ) < SMALL_DIFF )
+    {
+        // cut1 continues cut2
+        joined = cut2;
+        joined.myStop = cut1.myStop;
+        return true;
+    }
+    if( cut1.myStart >= cut2.myStart && cut1.myStop <= cut2.myStop )
+    {
+        // cut1 is entirely inside cut2
+        joined = cut2;
+        return true;
+    }
+    if(  cut2.myStart >= cut1.myStart && cut2.myStop <= cut1.myStop)
+    {
+        // cut2 is entirely inside cut1
+        joined = cut1;
+        return true;
+    }
+    if( cut2.myStart < cut1.myStop )
     {
         joined = cut1;
         joined.myStop = cut2.myStop;
         return true;
     }
-    if( fabs( cut2.myStop - cut1.myStart ) < 0.01 )
+    if( cut1.myStart < cut2.myStop )
     {
         joined = cut2;
-        joined.myStop = cut1.myStop;
+        joined.myStart = cut1.myStart;
         return true;
     }
     return false;
@@ -84,7 +113,7 @@ bool cCut::CanJoin( cCut& joined, const cCut& cut1, const cCut& cut2 )
 
 
 
-void cCutList::Add( const cCut& cut )
+void cCutList::add( const cCut& cut )
 {
     //cout << "Add " << cut.get() << "\n";
 
@@ -95,15 +124,13 @@ void cCutList::Add( const cCut& cut )
     // check if cut already exists
     // this happens when two items with the same dimension
     // are aligned perfectly side by side
-    vector < cCut >::iterator it =
-        std::find( myCut.begin(), myCut.end(), cut );
-    if( it != myCut.end() )
+    if( std::find( myCut.begin(), myCut.end(), cut ) != myCut.end() )
         return;
 
     // add the cut
     myCut.push_back( cut );
 }
-void cCutList::Join()
+void cCutList::join()
 {
     bool found = true;
     while( found )
@@ -116,16 +143,16 @@ void cCutList::Join()
             for( vector < cCut >::iterator it2 = it1+1;
                     it2 != myCut.end(); it2++ )
             {
-//                if( ( ! it1->myIsVertical ) && ( ! it2-> myIsVertical )) {
-//                cout << "test join " << it1->get() << " and "
-//                                        << it2->get() << "\n";
-//                }
+                if( ( ! it1->myIsVertical ) && ( ! it2-> myIsVertical )) {
+                cout << "test join " << it1->sget() << " and "
+                                        << it2->sget() << "\n";
+                }
                 if( cCut::CanJoin( cut, *it1, *it2 ) )
                 {
 
-//                    cout << "joining " << it1->get() << " and "
-//                        << it2->get() << " making "
-//                        << cut.get() << endl;
+//                    cout << "joining " << it1->sget() << " and "
+//                        << it2->sget() << " making "
+//                        << cut.sget() << endl;
 
                     /*  Erase the joined lines
 
@@ -145,7 +172,6 @@ void cCutList::Join()
             }
             if( found )
                 break;
-
         }
     }
 }
@@ -154,12 +180,12 @@ string cCut::sget() const
     stringstream ss;
     if( myIsVertical )
     {
-        ss << myIntercept << "," << myStart << ",";
+        ss << myIntercept << "," << myStart << " to ";
         ss << myIntercept << "," << myStop;
     }
     else
     {
-        ss << myStart << "," << myIntercept << ",";
+        ss << myStart << "," << myIntercept << " to ";
         ss << myStop << "," << myIntercept;
     }
     return ss.str();
@@ -211,25 +237,25 @@ void CutListBin( bin_t bin, cCutList& L )
     L.set( bin );
     for( item_t item : bin->contents() )
     {
-        L.Add( cCut(
+        L.add( cCut(
                    item->locX(),
                    item->locY(),
                    item->locX(),
                    item->locY() + item->sizY()
                ));
-        L.Add( cCut(
+        L.add( cCut(
                    item->locX(),
                    item->locY() + item->sizY(),
                    item->locX() + item->sizX(),
                    item->locY() + item->sizY()
                ));
-        L.Add( cCut(
+        L.add( cCut(
                    item->locX() + item->sizX(),
                    item->locY() + item->sizY(),
                    item->locX() + item->sizX(),
                    item->locY()
                ));
-        L.Add( cCut(
+        L.add( cCut(
                    item->locX() + item->sizX(),
                    item->locY(),
                    item->locX(),
