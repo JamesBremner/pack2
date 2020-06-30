@@ -1463,7 +1463,7 @@ std::string CutListS( cPackEngine& e )
 
     return ss.str();
 }
-std::vector< std::vector<int> > CutList( cPackEngine& e )
+std::vector< std::vector<int> > CutListEndpoints( cPackEngine& e )
 {
     std::vector< std::vector<int> > ret;
     for( bin_t b : e.bins() )
@@ -1473,6 +1473,18 @@ std::vector< std::vector<int> > CutList( cPackEngine& e )
         L.join();
         for( auto& row : L.get() )
             ret.push_back( row );
+    }
+    return ret;
+}
+std::vector< cCutList > CutList( cPackEngine& e )
+{
+    std::vector< cCutList > ret;
+    for( bin_t b : e.bins() )
+    {
+        cCutList L;
+        CutListBin( b, L );
+        L.join();
+        ret.push_back( L );
     }
     return ret;
 }

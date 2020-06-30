@@ -425,8 +425,14 @@ std::string DrawList( cPackEngine& e );
 std::string DrawList( bin_t bin );
 std::string DrawList( item_t item );
 
-std::string CutListS( cPackEngine& e );
-std::vector< std::vector<int> > CutList( cPackEngine& e );
+/// Human readable cut list
+std::string CutListString( cPackEngine& e );
+
+/// Vector of cut endpoints
+std::vector< std::vector<int> > CutListEndPoints( cPackEngine& e );
+
+/// Vector of cuts
+std::vector< cCutList > CutList( cPackEngine& e );
 }
 
 

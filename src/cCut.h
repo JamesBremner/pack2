@@ -1,5 +1,6 @@
 #pragma once
-namespace pack2 {
+namespace pack2
+{
 /**
 
   A 2D line
@@ -60,18 +61,38 @@ public:
 
     /** Number of cuts in list
     */
-    int size() { return (int) myCut.size(); }
+    int size()
+    {
+        return (int) myCut.size();
+    }
 
     /**  Clear list
     */
-    void clear() { myCut.clear(); }
+    void clear()
+    {
+        myCut.clear();
+    }
 
     /**  Descriptive string
     */
     std::string sget() const;
     std::vector< std::vector<int> > get() const;
 
-    void set( bin_t bin ) { myBin = bin; }
+    void set( bin_t bin )
+    {
+        myBin = bin;
+    }
+
+    std::vector < cCut >::iterator
+    begin()
+    {
+        return myCut.begin();
+    }
+    std::vector < cCut >::iterator
+    end()
+    {
+        return myCut.end();
+    }
 };
 
 
