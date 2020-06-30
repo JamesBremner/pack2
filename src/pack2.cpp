@@ -1463,7 +1463,7 @@ std::string CutListS( cPackEngine& e )
 
     return ss.str();
 }
-std::vector< std::vector<int> > CutListEndpoints( cPackEngine& e )
+std::vector< std::vector<int> > CutListEndPoints( cPackEngine& e )
 {
     std::vector< std::vector<int> > ret;
     for( bin_t b : e.bins() )
