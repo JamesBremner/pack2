@@ -1,0 +1,7 @@
+algorithm	01
+algorithm	closest
+bin	70
+item	20
+item	40
+item	75
+item	100
