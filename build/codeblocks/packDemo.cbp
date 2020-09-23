@@ -2,23 +2,23 @@
 <CodeBlocks_project_file>
 	<FileVersion major="1" minor="6" />
 	<Project>
-		<Option title="pack1d" />
+		<Option title="packDemo" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc_v83" />
 		<Build>
 			<Target title="Debug">
-				<Option output="../../bin/pack1d" prefix_auto="1" extension_auto="1" />
+				<Option output="../../bin/packDemo" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="../../bin" />
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc_v83" />
-				<Option parameters="../data/pack1d-3.txt" />
+				<Option parameters="../data/pack2d.txt" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="../../bin/pack1d" prefix_auto="1" extension_auto="1" />
+				<Option output="../../bin/packDemo" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="../../bin" />
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
@@ -39,11 +39,16 @@
 			<Add directory="$(#boost)" />
 		</Compiler>
 		<Linker>
+			<Add library="boost_thread-mgw82-mt-x64-1_72" />
 			<Add directory="$(#boost.lib)" />
 		</Linker>
 		<Unit filename="../../../raven-set/cRunWatch.cpp" />
 		<Unit filename="../../../raven-set/cRunWatch.h" />
+		<Unit filename="../../src/cCut.cpp" />
+		<Unit filename="../../src/cShape.cpp" />
 		<Unit filename="../../src/pack1d.cpp" />
+		<Unit filename="../../src/pack2.cpp" />
+		<Unit filename="../../src/pack2.h" />
 		<Extensions>
 			<code_completion />
 			<envvars />

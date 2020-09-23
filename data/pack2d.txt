@@ -1,0 +1,3 @@
+bin	15	15
+item	4	4
+item	7	7

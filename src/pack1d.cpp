@@ -5,33 +5,37 @@
 
 #include "cRunWatch.h"
 
+#include "pack2.h"
+
 /// A one dimenasional packing engine
 class cPackEngine1D
 {
 public:
     /** Add bin to hold items
-        @param[in] x capacity of bin
+    @param[in] x capacity of bin
     */
     void AddBin( int x )
     {
         bin = x;
     }
     /** Add item to fit into bin
-        @param[in] x wight of item
+    @param[in] x wight of item
     */
     void AddItem( int x )
     {
         vItem.push_back( x );
     }
+
     /** Use 0-1 packing ( each item can be used only one or not at all )
 
     If not called, unbounded packing will be used,
     where the items can be freely duplicated
-     */
+    */
     void algo01()
     {
         f01 = true;
     }
+
     /** Pack items to a total that is closest to bin capacity, possibly above the capacity
 
     If not called, items will be packed to a total that is closest but less than the bin capacity
@@ -40,12 +44,7 @@ public:
     {
         fclosest = true;
     }
-    /** read input file specified on command line
-    */
-    void Input(
-        int argc, char * argv[] );
 
-    /// pack using specified algorithm
     void pack();
 
     /// Unbounded packing
@@ -61,17 +60,97 @@ public:
     void DisplayItemsPacked();
 
 private:
+
     int bin;
     std::vector< int > vItem;
     std::vector< std::vector<int> > itemsPacked;
-    bool f01;
-    bool fclosest;
+    bool f01;           // true when 0-1 knapsack required
+    bool fclosest;      // true when unbounded knapsack required
 };
 
-void cPackEngine1D::pack()
+
+class cPackApp
+{
+public:
+
+    void AddBin( int x );
+    void AddBin( int x, int y );
+
+    void AddItem( int x );
+    void AddItem( int x, int y );
+
+    /** Use 0-1 packing ( each item can be used only one or not at all )
+
+    If not called, unbounded packing will be used,
+    where the items can be freely duplicated
+     */
+    void algo01()
+    {
+        PE1.algo01();
+    }
+    /** Pack items to a total that is closest to bin capacity, possibly above the capacity
+
+    If not called, items will be packed to a total that is closest but less than the bin capacity
+    */
+    void algoClosest()
+    {
+        PE1.algoClosest();
+    }
+    /** read input file specified on command line
+    */
+    void Input(
+        int argc, char * argv[] );
+
+    /// pack using specified algorithm
+    void pack();
+
+    void displayItemsPacked();
+
+
+private:
+
+    bool f2D;           // true when 2D packing required
+    cPackEngine1D PE1;
+    pack2::cPackEngine  PE2;
+};
+
+void cPackApp::AddBin( int x )
+{
+    PE1.AddBin( x );
+}
+void cPackApp::AddItem( int x )
+{
+    PE1.AddItem( x );
+}
+void cPackApp::AddBin( int x, int y )
+{
+    f2D = true;
+    PE2.add( pack2::bin_t( new pack2::cBin("A",x,y) ));
+}
+void cPackApp::AddItem( int x, int y )
+{
+    PE2.add( pack2::item_t( new pack2::cItem("I",x,y)));
+}
+void cPackApp::pack()
 {
     raven::set::cRunWatch( "pack" );
 
+    if( ! f2D )
+        PE1.pack();
+    else
+        Pack( PE2 );
+
+}
+void cPackApp::displayItemsPacked()
+{
+    if( ! f2D )
+        PE1.DisplayItemsPacked();
+    else
+        std::cout << CSV( PE2 );
+}
+
+void cPackEngine1D::pack()
+{
     itemsPacked.resize(bin+1);
 
     packClosest();
@@ -86,34 +165,31 @@ void cPackEngine1D::packClosest()
     if( !fclosest )
         return;
 
-        bin *= 2;
-        fclosest = false;
-        itemsPacked.resize(bin+1);
-        auto m = pack01();
-        bin /= 2;
-        fclosest = true;
-        int close = 1e9;
-        int closest = 0;
-        for( int n = 1; n <= bin*2; n++ )
+    bin *= 2;
+    fclosest = false;
+    itemsPacked.resize(bin+1);
+    auto m = pack01();
+    bin /= 2;
+    fclosest = true;
+    int close = 1e9;
+    int closest = 0;
+    for( int n = 1; n <= bin*2; n++ )
+    {
+        int x = m[vItem.size()][n];
+        if( fabs( x - bin ) < close )
         {
-            int x = m[vItem.size()][n];
-            if( fabs( x - bin ) < close )
-            {
-                close = fabs( x - bin );
-                closest = n;
-            }
+            close = fabs( x - bin );
+            closest = n;
         }
-        //std::cout << "closest " << closest << " " << m[vItem.size()][closest]  << "\n";
+    }
+    //std::cout << "closest " << closest << " " << m[vItem.size()][closest]  << "\n";
 
-        bin = closest;
-        pack01();
+    bin = closest;
+    pack01();
 
 }
 void cPackEngine1D::packUB()
 {
-
-    std::vector<int> P;          // calculated discretization points
-
     std::vector<int> c( bin+1 );
 
     for( int i = 0; i < (int)vItem.size(); i++ )
@@ -176,7 +252,7 @@ void cPackEngine1D::DisplayItemsPacked()
     std::cout << "\n";
 }
 
-void cPackEngine1D::Input(
+void cPackApp::Input(
     int argc, char * argv[] )
 {
     if( argc != 2 )
@@ -206,11 +282,21 @@ void cPackEngine1D::Input(
             continue;
         if( token[0] == "bin")
         {
-            AddBin( atoi( token[1].c_str()));
+            if( token.size() == 2 )
+            {
+                AddBin( atoi( token[1].c_str()));
+                continue;
+            }
+            AddBin( atoi( token[1].c_str()),
+                    atoi( token[2].c_str()));
         }
         if( token[0] == "item")
         {
-            AddItem( atoi( token[1].c_str()));
+            if( ! f2D )
+                AddItem( atoi( token[1].c_str()));
+            else
+                AddItem( atoi( token[1].c_str()),
+                         atoi( token[2].c_str()) );
         }
         if( token[0] == "algorithm")
         {
@@ -227,10 +313,10 @@ int main(int argc, char * argv[])
 {
     raven::set::cRunWatch::Start();
 
-    cPackEngine1D PE;
-    PE.Input( argc, argv );
-    PE.pack();
-    PE.DisplayItemsPacked();
+    cPackApp PA;
+    PA.Input( argc, argv );
+    PA.pack();
+    PA.displayItemsPacked();
 
     raven::set::cRunWatch::Report();
 
