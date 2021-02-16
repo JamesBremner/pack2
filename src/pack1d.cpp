@@ -276,11 +276,11 @@ void cPackApp::Input(
         std::vector< std::string > token;
         std::stringstream sst(line);
         std::string a;
-        while( getline( sst, a, '\t' ) )
+        while( getline( sst, a, ' ' ) )
             token.push_back( a );
         if( token.size() < 2 )
             continue;
-        if( token[0] == "bin")
+        if( token[0] == "bin" || token[0] == "i" )
         {
             if( token.size() == 2 )
             {
@@ -290,7 +290,7 @@ void cPackApp::Input(
             AddBin( atoi( token[1].c_str()),
                     atoi( token[2].c_str()));
         }
-        if( token[0] == "item")
+        if( token[0] == "item" || token[0] == "d" )
         {
             if( ! f2D )
                 AddItem( atoi( token[1].c_str()));
@@ -306,6 +306,8 @@ void cPackApp::Input(
                 algoClosest();
         }
     }
+    std::cout << PE2.items().size() <<" items "
+        << PE2.bins().size() << " bins\n";
 }
 
 
