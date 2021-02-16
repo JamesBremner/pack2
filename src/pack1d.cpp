@@ -110,8 +110,11 @@ public:
 private:
 
     bool f2D;           // true when 2D packing required
+    bool myfSpin;
     cPackEngine1D PE1;
     pack2::cPackEngine  PE2;
+
+    void SpinEnable();
 };
 
 void cPackApp::AddBin( int x )
@@ -130,6 +133,8 @@ void cPackApp::AddBin( int x, int y )
 void cPackApp::AddItem( int x, int y )
 {
     PE2.add( pack2::item_t( new pack2::cItem("I",x,y)));
+    if( myfSpin )
+        PE2.items().back()->spinEnable();
 }
 void cPackApp::pack()
 {
@@ -304,13 +309,20 @@ void cPackApp::Input(
                 algo01();
             if( token[1] == "closest" )
                 algoClosest();
+            if( token[1] == "spin" )
+                SpinEnable();
         }
     }
     std::cout << PE2.items().size() <<" items "
         << PE2.bins().size() << " bins\n";
 }
 
-
+void cPackApp::SpinEnable()
+{
+    myfSpin = true;
+    for( auto i : PE2.items() )
+        i->spinEnable();
+}
 int main(int argc, char * argv[])
 {
     raven::set::cRunWatch::Start();
